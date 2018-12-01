@@ -12,6 +12,7 @@ import com.mapbox.android.core.permissions.PermissionsListener
 import com.mapbox.android.core.permissions.PermissionsManager
 import android.widget.*
 import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.annotations.MarkerOptions
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.location.modes.CameraMode
@@ -60,6 +61,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         mapView.getMapAsync{mapboxMap ->
             map = mapboxMap
             enableLocation()
+            mapboxMap.addMarker(MarkerOptions().position(LatLng(55.9533,-3.1883)).title("Scotland").snippet("Edinburgh"))
         }
     }
 
