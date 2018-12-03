@@ -22,7 +22,7 @@ import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
-
+import com.mapbox.geojson.*
 /**/
 //import android.content.Context
 //import android.content.Intent
@@ -33,14 +33,11 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 //import android.view.MenuItem
 //import com.google.firebase.auth.FirebaseAuth
 //import com.google.firebase.auth.FirebaseUser
-import com.mapbox.geojson.*
 import com.mapbox.mapboxsdk.annotations.IconFactory
 import com.mapbox.mapboxsdk.annotations.Marker
 import com.mapbox.mapboxsdk.camera.CameraUpdate
 import com.mapbox.mapboxsdk.style.light.Position
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
-
-
 //import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListener, LocationEngineListener, DownloadCompleteListener  {
@@ -65,20 +62,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(tag, "[onCreate] method")
         setContentView(R.layout.activity_main)
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
-        mapView.getMapAsync{mapboxMap ->
-            map = mapboxMap
-            enableLocation()
-        }
+        mapView.getMapAsync(this)
     }
 
     override fun onMapReady(mapboxMap: MapboxMap?) {
         if (mapboxMap == null) {
             Log.d(tag, "[onMapReady] mapboxMap is null")
         } else {
+            Log.d(tag, "[onMapReady] mapboxMap is not null")
             map = mapboxMap
             map.uiSettings.isCompassEnabled = true
             map.uiSettings.isZoomControlsEnabled = true
@@ -90,19 +86,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
 
     override fun downloadComplete(result: String) {
-        var counter = 0
+        Log.d(tag, "[downloadComplete]")
         val featureCollection = FeatureCollection.fromJson(result)
         val features = featureCollection.features()
         for (Feature in features!!) {
-            if (Feature.geometry() is Point) {
                 val coordinates = (Feature.geometry() as Point).coordinates()
                 val jsonObject = Feature.properties()
                 val currency = jsonObject?.get("currency").toString()
                 val value = jsonObject?.get("value").toString()
-                val icon = IconFactory.getInstance(this).fromResource(R.drawable.coin)
-                map.addMarker(MarkerOptions().position(coordinates as LatLng).title(currency).snippet(value).icon(icon))
-                counter = counter + 1
-            }
+//                val icon = IconFactory.getInstance(this)
+//                val coin = icon.fromResource(R.drawable.new_coin)
+                map.addMarker(MarkerOptions().position(LatLng(coordinates[1], coordinates[0])).title(currency).snippet(value))
         }
     }
 
@@ -120,6 +114,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     @SuppressWarnings("MissingPermission")
     private fun initialiseLocationEngine() {
+        Log.d(tag, "[initialiseLocationEngine] method")
         locationEngine = LocationEngineProvider(this).obtainBestLocationEngineAvailable()
         locationEngine?.apply {
             interval = 5000
@@ -136,6 +131,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     @SuppressWarnings("MissingPermission")
     private fun initialiseLocationLayer() {
+        Log.d(tag, "[initialiseLocationLayer] method")
         locationLayerPlugin = LocationLayerPlugin(mapView, map, locationEngine)
         locationLayerPlugin?.apply {
             setLocationLayerEnabled(true)
@@ -143,14 +139,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             renderMode = RenderMode.NORMAL
         }
     }
-//        }
-//    }
 
     private fun setCameraPosition(location: Location) {
+        Log.d(tag, "[setCameraPosition] method")
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 13.0))
     }
 
     override fun onLocationChanged(location: Location?) {
+        Log.d(tag, "[onLocationChanged] method")
         location?.let {
             originLocation = location
             setCameraPosition(location)
@@ -165,7 +161,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     //
 //
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) { // override
-        Log.d(tag, "Permissions: $permissionsToExplain")
+        Log.d(tag, "[onExplanationNeeded] Permissions: $permissionsToExplain")
         // Present popup message or dialog
         Toast.makeText(this, "Permission needed to access location for gameplay.", Toast.LENGTH_LONG).show()
     }
@@ -180,12 +176,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     }
     //
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        Log.d(tag, "[onRequestPermissionsResult] method")
         permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     override fun onStart() {
         super.onStart()
-
         val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
         downloadDate = settings.getString("lastDownloadDate", "")
         Log.d(tag, "[onStart] Recalled lastDownloadDate is $downloadDate")
@@ -199,11 +195,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     }
 
     override fun onResume() {
+        Log.d(tag, "[onResume] method")
         super.onResume()
         mapView.onResume()
     }
 
     override fun onPause() {
+        Log.d(tag, "[onPause] method")
         super.onPause()
         mapView.onPause()
     }
@@ -213,7 +211,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         locationEngine?.removeLocationUpdates()
         locationLayerPlugin?.onStop()
         mapView.onStop()
-
         Log.d(tag, "[onStop] Storing lastDownloadDate of $downloadDate")
         val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
         val editor = settings.edit()
@@ -222,17 +219,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     }
 
     override fun onDestroy() {
+        Log.d(tag, "[onDestroy] method")
         super.onDestroy()
         locationEngine?.deactivate()
         mapView.onDestroy()
     }
 
     override fun onLowMemory() {
+        Log.d(tag, "[onLowMemory] method")
         super.onLowMemory()
         mapView.onLowMemory()
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
+        Log.d(tag, "[onSaveInstanceState] method")
         super.onSaveInstanceState(outState)
         if (outState != null) {
             mapView.onSaveInstanceState(outState)
