@@ -1,9 +1,6 @@
 package com.example.s1603459.myapplication
 
 import android.os.AsyncTask
-import android.support.v7.app.AppCompatActivity
-import android.os.Bundle
-import com.example.s1603459.myapplication.DownloadCompleteRunner.result
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
@@ -19,9 +16,7 @@ class DownloadFileTask(private val caller: DownloadCompleteListener) : AsyncTask
 
     private fun loadFileFromNetwork(urlString: String): String {
         val stream: InputStream = downloadUrl(urlString)
-        //Read input from stream; build result as string
-
-        return stream.toString() // result
+        return stream.bufferedReader().use { it.readText() }
     }
 
     @Throws(IOException::class)

@@ -1,5 +1,6 @@
 package com.example.s1603459.myapplication
 
+import android.content.Context
 import android.location.Location
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -21,6 +22,7 @@ import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
+
 /**/
 //import android.content.Context
 //import android.content.Intent
@@ -31,23 +33,32 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 //import android.view.MenuItem
 //import com.google.firebase.auth.FirebaseAuth
 //import com.google.firebase.auth.FirebaseUser
-//import com.mapbox.mapboxsdk.annotations.MarkerOptions
-//import com.mapbox.geojson.*
-//import com.mapbox.mapboxsdk.annotations.Marker
-//import com.mapbox.mapboxsdk.camera.CameraUpdate
-//import com.mapbox.mapboxsdk.style.light.Position
-//import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
+import com.mapbox.geojson.*
+import com.mapbox.mapboxsdk.annotations.IconFactory
+import com.mapbox.mapboxsdk.annotations.Marker
+import com.mapbox.mapboxsdk.camera.CameraUpdate
+import com.mapbox.mapboxsdk.style.light.Position
+import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
+
+
 //import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListener, LocationEngineListener  { // DownloadCompleteListener
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListener, LocationEngineListener, DownloadCompleteListener  {
+
 
     private val tag = "MainActivity"
+
+    private var downloadDate = "" // YYYY/MM/DD
+
+    private val preferencesFile = "MyPrefsFile"
 
     private lateinit var mapView: MapView
     private lateinit var map: MapboxMap
 
     private lateinit var originLocation: Location
     private lateinit var permissionsManager: PermissionsManager
+
+    private lateinit var JSONstring: DownloadFileTask
 
     private var locationEngine: LocationEngine? = null
     private var locationLayerPlugin: LocationLayerPlugin? = null
@@ -61,11 +72,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         mapView.getMapAsync{mapboxMap ->
             map = mapboxMap
             enableLocation()
-            mapboxMap.addMarker(MarkerOptions().position(LatLng(55.9533,-3.1883)).title("Scotland").snippet("Edinburgh"))
         }
     }
 
-        override fun onMapReady(mapboxMap: MapboxMap?) {
+    override fun onMapReady(mapboxMap: MapboxMap?) {
         if (mapboxMap == null) {
             Log.d(tag, "[onMapReady] mapboxMap is null")
         } else {
@@ -73,29 +83,28 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             map.uiSettings.isCompassEnabled = true
             map.uiSettings.isZoomControlsEnabled = true
             enableLocation()
+            JSONstring = DownloadFileTask(this)
+            JSONstring.execute("http://homepages.inf.ed.ac.uk/stg/coinz/2018/12/03/coinzmap.geojson")
         }
-
-
-//        GeoJsonSource source = new GeoJsonSource("geojson", geoJsonString)
-//        mapboxMap.addSource(source)
-//        mapboxMap.addLayer(new LineLayer("geojson", "geojson"))
-//        FeatureCollection featureCollection = FeatureCollection.fromJson(geoJsonString)
-//
-//        List<Feature> features = featureCollection.getFeatures();
-//
-//    for (Feature f : features) {
-//        if (f.getGeometry() instanceof Point) {
-//        Position coordinates = f.getGeometry().getCoordinates()
-//        map.addMarker(new MarkerViewOptions().position(new LatLng(coordinates.getLatitude(), coordinates.getLongitude())))
-//    }
-//}
-
     }
 
 
-//    override fun downloadComplete(result: String) {
-//       toodo("not implemented") //To change body of created functions use File | Settings | File Templates.
-//    }
+    override fun downloadComplete(result: String) {
+        var counter = 0
+        val featureCollection = FeatureCollection.fromJson(result)
+        val features = featureCollection.features()
+        for (Feature in features!!) {
+            if (Feature.geometry() is Point) {
+                val coordinates = (Feature.geometry() as Point).coordinates()
+                val jsonObject = Feature.properties()
+                val currency = jsonObject?.get("currency").toString()
+                val value = jsonObject?.get("value").toString()
+                val icon = IconFactory.getInstance(this).fromResource(R.drawable.coin)
+                map.addMarker(MarkerOptions().position(coordinates as LatLng).title(currency).snippet(value).icon(icon))
+                counter = counter + 1
+            }
+        }
+    }
 
     private fun enableLocation() {
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
@@ -116,7 +125,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             interval = 5000
             fastestInterval = 1000
             priority = LocationEnginePriority.HIGH_ACCURACY
-                    activate()
+            activate()
         }
         val lastLocation = locationEngine?.lastLocation
         if (lastLocation != null) {
@@ -127,23 +136,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     @SuppressWarnings("MissingPermission")
     private fun initialiseLocationLayer() {
-//        if (mapView == null) { Log.d(tag, "mapView is null")
-//        } else {
-//            if (map == null) { Log.d(tag, "map is null")
-//            } else {
-                locationLayerPlugin = LocationLayerPlugin(mapView, map, locationEngine)
-                locationLayerPlugin?.apply {
-                    setLocationLayerEnabled(true)
-                    cameraMode = CameraMode.TRACKING
-                    renderMode = RenderMode.NORMAL
-                }
-            }
+        locationLayerPlugin = LocationLayerPlugin(mapView, map, locationEngine)
+        locationLayerPlugin?.apply {
+            setLocationLayerEnabled(true)
+            cameraMode = CameraMode.TRACKING
+            renderMode = RenderMode.NORMAL
+        }
+    }
 //        }
 //    }
 
     private fun setCameraPosition(location: Location) {
-//        val latlng = LatLng(location.latitude, location.longitude)
-//        map?.animateCamera(CameraUpdateFactory.newLatLng(latlng))
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 13.0))
     }
 
@@ -153,29 +156,29 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             setCameraPosition(location)
         }
     }
-//
+    //
     @SuppressWarnings("MissingPermission")
     override fun onConnected() {
         Log.d(tag, "[onConnected] requesting location updates")
         locationEngine?.requestLocationUpdates()
     }
-//
+    //
 //
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) { // override
         Log.d(tag, "Permissions: $permissionsToExplain")
         // Present popup message or dialog
         Toast.makeText(this, "Permission needed to access location for gameplay.", Toast.LENGTH_LONG).show()
     }
-//
+    //
     override fun onPermissionResult(granted: Boolean) { // override
         Log.d(tag, "[onPermissionResult] granted == $granted")
         if (granted) {
             enableLocation()
         } else {
-        // Open a dialogue with the user
+            // Open a dialogue with the user
         }
     }
-//
+    //
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
@@ -183,10 +186,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     override fun onStart() {
         super.onStart()
 
-//        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
-//        downloadDate = settings.getString("lastDownloadDate", "")
-//        Log.d(tag, "[onStart] Recalled lastDownloadDate is $downloadDate")
-//
+        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
+        downloadDate = settings.getString("lastDownloadDate", "")
+        Log.d(tag, "[onStart] Recalled lastDownloadDate is $downloadDate")
+
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
             locationEngine?.requestLocationUpdates()
             locationLayerPlugin?.onStart()
@@ -211,11 +214,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         locationLayerPlugin?.onStop()
         mapView.onStop()
 
-//        Log.d(tag, "[onStop] Storing lastDownloadDate of $downloadDate")
-//        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
-//        val editor = settings.edit()
-//        editor.putString("lastDownloadDate", downloadDate)
-//        editor.apply()
+        Log.d(tag, "[onStop] Storing lastDownloadDate of $downloadDate")
+        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
+        val editor = settings.edit()
+        editor.putString("lastDownloadDate", downloadDate)
+        editor.apply()
     }
 
     override fun onDestroy() {
@@ -236,10 +239,4 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         }
     }
 
-//    private fun switchToMap() {
-//        val intent = Intent(this, MapsActivity::class.java)
-//        startActivity(intent)
-//    }
-
 }
-
