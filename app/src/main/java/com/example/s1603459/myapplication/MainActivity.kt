@@ -38,6 +38,11 @@ import com.mapbox.mapboxsdk.annotations.Marker
 import com.mapbox.mapboxsdk.camera.CameraUpdate
 import com.mapbox.mapboxsdk.style.light.Position
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
+import java.text.SimpleDateFormat
+import java.time.*
+import java.time.format.DateTimeFormatter
+import java.util.*
+
 //import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListener, LocationEngineListener, DownloadCompleteListener  {
@@ -46,6 +51,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private val tag = "MainActivity"
 
     private var downloadDate = "" // YYYY/MM/DD
+    private var todaysDate = ""
+    private var calendar = Calendar.getInstance()
+    private var calMonth = calendar.get(Calendar.MONTH) + 1
+    private var calDay = calendar.get(Calendar.DAY_OF_MONTH)
+//    private var dateString = "" + calendar.get(Calendar.YEAR) + "/" + calMonth + "/" + calendar.get(Calendar.DAY_OF_MONTH)
+//
+//    private val dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
+//    private var localDate = LocalDate.now()
+//
+//
+//
+//    private var todaysDate = dateFormatter.format(localDate)
+
+
+
 
     private val preferencesFile = "MyPrefsFile"
 
@@ -64,6 +84,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         super.onCreate(savedInstanceState)
         Log.d(tag, "[onCreate] method")
         setContentView(R.layout.activity_main)
+
+        if (calDay < 10 && calMonth < 10) todaysDate = "" + calendar.get(Calendar.YEAR) + "/0" + calMonth + "/0" + calendar.get(Calendar.DAY_OF_MONTH)
+        else if (calDay > 10 && calMonth < 10) todaysDate = "" + calendar.get(Calendar.YEAR) + "/0" + calMonth + "/" + calendar.get(Calendar.DAY_OF_MONTH)
+        else if (calDay < 10 && calMonth > 10) todaysDate = "" + calendar.get(Calendar.YEAR) + "/" + calMonth + "/0" + calendar.get(Calendar.DAY_OF_MONTH)
+        else todaysDate = "" + calendar.get(Calendar.YEAR) + "/" + calMonth + "/" + calendar.get(Calendar.DAY_OF_MONTH)
+
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
@@ -80,7 +106,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             map.uiSettings.isZoomControlsEnabled = true
             enableLocation()
             JSONstring = DownloadFileTask(this)
-            JSONstring.execute("http://homepages.inf.ed.ac.uk/stg/coinz/2018/12/03/coinzmap.geojson")
+            Log.d(tag, "todays date is $todaysDate")
+            JSONstring.execute("http://homepages.inf.ed.ac.uk/stg/coinz/$todaysDate/coinzmap.geojson")
         }
     }
 
