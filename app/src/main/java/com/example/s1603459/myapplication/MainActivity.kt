@@ -31,13 +31,12 @@ import com.mapbox.geojson.*
 //import android.support.design.widget.Snackbar
 //import android.view.Menu
 //import android.view.MenuItem
-//import com.google.firebase.auth.FirebaseAuth
-//import com.google.firebase.auth.FirebaseUser
 import com.mapbox.mapboxsdk.annotations.IconFactory
 import com.mapbox.mapboxsdk.annotations.Marker
 import com.mapbox.mapboxsdk.camera.CameraUpdate
 import com.mapbox.mapboxsdk.style.light.Position
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
+import kotlinx.android.synthetic.main.activity_main.*
 import java.text.SimpleDateFormat
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -55,17 +54,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private var calendar = Calendar.getInstance()
     private var calMonth = calendar.get(Calendar.MONTH) + 1
     private var calDay = calendar.get(Calendar.DAY_OF_MONTH)
-//    private var dateString = "" + calendar.get(Calendar.YEAR) + "/" + calMonth + "/" + calendar.get(Calendar.DAY_OF_MONTH)
-//
-//    private val dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
-//    private var localDate = LocalDate.now()
-//
-//
-//
-//    private var todaysDate = dateFormatter.format(localDate)
-
-
-
 
     private val preferencesFile = "MyPrefsFile"
 
@@ -84,6 +72,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         super.onCreate(savedInstanceState)
         Log.d(tag, "[onCreate] method")
         setContentView(R.layout.activity_main)
+//        setSupportActionBar(toolbar)
 
         if (calDay < 10 && calMonth < 10) todaysDate = "" + calendar.get(Calendar.YEAR) + "/0" + calMonth + "/0" + calendar.get(Calendar.DAY_OF_MONTH)
         else if (calDay > 10 && calMonth < 10) todaysDate = "" + calendar.get(Calendar.YEAR) + "/0" + calMonth + "/" + calendar.get(Calendar.DAY_OF_MONTH)
@@ -169,7 +158,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     private fun setCameraPosition(location: Location) {
         Log.d(tag, "[setCameraPosition] method")
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 13.0))
+        val latlng = LatLng(location.latitude, location.longitude)
+        map.animateCamera(CameraUpdateFactory.newLatLng(latlng))
     }
 
     override fun onLocationChanged(location: Location?) {
