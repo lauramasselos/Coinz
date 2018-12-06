@@ -16,6 +16,10 @@
         completions."
     </string>
     <string name="title_activity_sign_in">SignInActivity</string>
+    <string name="title_activity_bottom_navigation">BottomNavigationActivity</string>
+    <string name="title_home">Home</string>
+    <string name="title_map">Map</string>
+    <string name="title_bank">Bank</string>
     <!--<string name="start_navigating">Start Navigating</string>-->
     <!--<string name="action_settings">Settings</string>-->
 </resources>

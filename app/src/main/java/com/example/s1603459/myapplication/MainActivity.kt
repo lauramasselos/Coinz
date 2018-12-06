@@ -1,8 +1,10 @@
 package com.example.s1603459.myapplication
 
 import android.content.Context
+import android.content.Intent
 import android.location.Location
 import android.os.Bundle
+import android.support.design.widget.BottomNavigationView
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import com.mapbox.android.core.location.LocationEngine
@@ -50,7 +52,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private val tag = "MainActivity"
 
     private var downloadDate = "" // YYYY/MM/DD
-    private var todaysDate = ""
     private var calendar = Calendar.getInstance()
     private var calMonth = calendar.get(Calendar.MONTH) + 1
     private var calDay = calendar.get(Calendar.DAY_OF_MONTH)
@@ -73,11 +74,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         Log.d(tag, "[onCreate] method")
         setContentView(R.layout.activity_main)
 //        setSupportActionBar(toolbar)
+        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
 
-        if (calDay < 10 && calMonth < 10) todaysDate = "" + calendar.get(Calendar.YEAR) + "/0" + calMonth + "/0" + calendar.get(Calendar.DAY_OF_MONTH)
-        else if (calDay > 10 && calMonth < 10) todaysDate = "" + calendar.get(Calendar.YEAR) + "/0" + calMonth + "/" + calendar.get(Calendar.DAY_OF_MONTH)
-        else if (calDay < 10 && calMonth > 10) todaysDate = "" + calendar.get(Calendar.YEAR) + "/" + calMonth + "/0" + calendar.get(Calendar.DAY_OF_MONTH)
-        else todaysDate = "" + calendar.get(Calendar.YEAR) + "/" + calMonth + "/" + calendar.get(Calendar.DAY_OF_MONTH)
+        if (calDay < 10 && calMonth < 10) downloadDate = "" + calendar.get(Calendar.YEAR) + "/0" + calMonth + "/0" + calendar.get(Calendar.DAY_OF_MONTH)
+        else if (calDay > 10 && calMonth < 10) downloadDate = "" + calendar.get(Calendar.YEAR) + "/0" + calMonth + "/" + calendar.get(Calendar.DAY_OF_MONTH)
+        else if (calDay < 10 && calMonth > 10) downloadDate = "" + calendar.get(Calendar.YEAR) + "/" + calMonth + "/0" + calendar.get(Calendar.DAY_OF_MONTH)
+        else downloadDate = "" + calendar.get(Calendar.YEAR) + "/" + calMonth + "/" + calendar.get(Calendar.DAY_OF_MONTH)
 
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
         mapView = findViewById(R.id.mapView)
@@ -95,8 +97,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             map.uiSettings.isZoomControlsEnabled = true
             enableLocation()
             JSONstring = DownloadFileTask(this)
-            Log.d(tag, "todays date is $todaysDate")
-            JSONstring.execute("http://homepages.inf.ed.ac.uk/stg/coinz/$todaysDate/coinzmap.geojson")
+            Log.d(tag, "todays date is $downloadDate")
+            JSONstring.execute("http://homepages.inf.ed.ac.uk/stg/coinz/$downloadDate/coinzmap.geojson")
         }
     }
 
@@ -106,13 +108,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         val featureCollection = FeatureCollection.fromJson(result)
         val features = featureCollection.features()
         for (Feature in features!!) {
-                val coordinates = (Feature.geometry() as Point).coordinates()
-                val jsonObject = Feature.properties()
-                val currency = jsonObject?.get("currency").toString()
-                val value = jsonObject?.get("value").toString()
+            val coordinates = (Feature.geometry() as Point).coordinates()
+            val jsonObject = Feature.properties()
+            val currency = jsonObject?.get("currency").toString()
+            val value = jsonObject?.get("value").toString()
 //                val icon = IconFactory.getInstance(this)
 //                val coin = icon.fromResource(R.drawable.new_coin)
-                map.addMarker(MarkerOptions().position(LatLng(coordinates[1], coordinates[0])).title(currency).snippet(value))
+            map.addMarker(MarkerOptions().position(LatLng(coordinates[1], coordinates[0])).title(currency).snippet(value))
         }
     }
 
@@ -200,7 +202,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     override fun onStart() {
         super.onStart()
         val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
-        downloadDate = settings.getString("lastDownloadDate", "")
+//        downloadDate = settings.getString("lastDownloadDate", "")
         Log.d(tag, "[onStart] Recalled lastDownloadDate is $downloadDate")
 
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
@@ -255,5 +257,29 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             mapView.onSaveInstanceState(outState)
         }
     }
+
+
+    private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
+        when (item.itemId) {
+            R.id.navigation_home -> {
+                message.setText(R.string.title_home)
+                val intent = Intent(this, LoginActivity::class.java)
+                startActivity(intent)
+                return@OnNavigationItemSelectedListener true
+            }
+            R.id.navigation_map-> {
+                message.setText(R.string.title_map)
+                return@OnNavigationItemSelectedListener true
+            }
+            R.id.navigation_bank -> {
+                message.setText(R.string.title_bank)
+                return@OnNavigationItemSelectedListener true
+            }
+        }
+        false
+    }
+
+
+
 
 }
