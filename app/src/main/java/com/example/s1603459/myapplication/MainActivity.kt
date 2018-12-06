@@ -56,9 +56,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private val tag = "MainActivity"
 
     private var downloadDate = "" // YYYY/MM/DD
-    private var calendar = Calendar.getInstance()
-    private var calMonth = calendar.get(Calendar.MONTH) + 1
-    private var calDay = calendar.get(Calendar.DAY_OF_MONTH)
 
     private val preferencesFile = "MyPrefsFile"
 
@@ -92,10 +89,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 //        setSupportActionBar(toolbar)
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
 
-        if (calDay < 10 && calMonth < 10) downloadDate = "" + calendar.get(Calendar.YEAR) + "/0" + calMonth + "/0" + calendar.get(Calendar.DAY_OF_MONTH)
-        else if (calDay > 10 && calMonth < 10) downloadDate = "" + calendar.get(Calendar.YEAR) + "/0" + calMonth + "/" + calendar.get(Calendar.DAY_OF_MONTH)
-        else if (calDay < 10 && calMonth > 10) downloadDate = "" + calendar.get(Calendar.YEAR) + "/" + calMonth + "/0" + calendar.get(Calendar.DAY_OF_MONTH)
-        else downloadDate = "" + calendar.get(Calendar.YEAR) + "/" + calMonth + "/" + calendar.get(Calendar.DAY_OF_MONTH)
+        downloadDate = SimpleDateFormat("YYYY/MM/dd").format(Date())
 
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
         mapView = findViewById(R.id.mapView)
