@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.view.View
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
 import com.mapbox.android.core.location.LocationEnginePriority
@@ -14,6 +15,9 @@ import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.android.core.permissions.PermissionsListener
 import com.mapbox.android.core.permissions.PermissionsManager
 import android.widget.*
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.*
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.annotations.MarkerOptions
 import com.mapbox.mapboxsdk.geometry.LatLng
@@ -69,10 +73,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private var locationEngine: LocationEngine? = null
     private var locationLayerPlugin: LocationLayerPlugin? = null
 
+    //Firebase references
+    private var mDatabaseReference: DatabaseReference? = null
+    private var mDatabase: FirebaseDatabase? = null
+    private var mAuth: FirebaseAuth? = null
+    private var user: FirebaseUser? = null
+    //UI elements
+    private var name: String? = null
+    private var email: String? = null
+    private var isEmailVerified: Boolean? = null
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(tag, "[onCreate] method")
         setContentView(R.layout.activity_main)
+        initialise()
 //        setSupportActionBar(toolbar)
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
 
@@ -85,6 +101,45 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
+    }
+
+
+    private fun initialise() {
+        mDatabase = FirebaseDatabase.getInstance()
+        mDatabaseReference = mDatabase!!.reference!!.child("Users")
+        mAuth = FirebaseAuth.getInstance()
+        user = mAuth!!.currentUser
+        name = user?.displayName
+        email = user?.email
+        isEmailVerified = user?.isEmailVerified
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+//        val mUser = mAuth!!.currentUser
+//        val mUserReference = mDatabaseReference!!.child(mUser!!.uid)
+//        email = mUser!!.email
+//        isEmailVerified = mUser.isEmailVerified
+//        mUserReference?.addValueEventListener(object : ValueEventListener {
+//            override fun onDataChange(snapshot: DataSnapshot) {
+//                name = (snapshot.child("firstName").value as String) + " " + (snapshot.child("lastName").value as String)
+//            }
+//            override fun onCancelled(databaseError: DatabaseError) {}
+//        })
+
+
+
+        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
+//        downloadDate = settings.getString("lastDownloadDate", "")
+        Log.d(tag, "[onStart] Recalled lastDownloadDate is $downloadDate")
+
+        if (PermissionsManager.areLocationPermissionsGranted(this)) {
+            locationEngine?.requestLocationUpdates()
+            locationLayerPlugin?.onStart()
+        }
+        mapView.onStart()
+
     }
 
     override fun onMapReady(mapboxMap: MapboxMap?) {
@@ -199,19 +254,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
-    override fun onStart() {
-        super.onStart()
-        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
-//        downloadDate = settings.getString("lastDownloadDate", "")
-        Log.d(tag, "[onStart] Recalled lastDownloadDate is $downloadDate")
-
-        if (PermissionsManager.areLocationPermissionsGranted(this)) {
-            locationEngine?.requestLocationUpdates()
-            locationLayerPlugin?.onStart()
-        }
-        mapView.onStart()
-
-    }
 
     override fun onResume() {
         Log.d(tag, "[onResume] method")

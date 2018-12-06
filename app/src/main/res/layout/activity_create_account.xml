@@ -1,47 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:weightSum="3">
+    tools:context=".CreateAccountActivity">
 
+    <EditText
+        android:id="@+id/et_first_name"
+        style="@style/viewCustom"
+        android:ems="10"
+        android:hint="@string/first_name"
+        android:inputType="textPersonName" />
+    <EditText
+        android:id="@+id/et_last_name"
+        style="@style/viewCustom"
+        android:layout_below="@id/et_first_name"
+        android:ems="10"
+        android:hint="@string/last_name"
+        android:inputType="textPersonName" />
     <EditText
         android:id="@+id/et_email"
         style="@style/viewCustom"
         android:ems="10"
-        android:hint="Email"
+        android:layout_below="@id/et_last_name"
+        android:hint="@string/email"
         android:inputType="textEmailAddress" />
     <EditText
         android:id="@+id/et_password"
         style="@style/viewCustom"
         android:layout_below="@id/et_email"
         android:ems="10"
-        android:hint="Password"
+        android:hint="@string/password"
         android:inputType="textPassword" />
     <Button
-        android:id="@+id/btn_login"
+        android:id="@+id/btn_register"
         style="@style/viewCustom"
         android:layout_below="@id/et_password"
-        android:background="@color/colorAccent"
-        android:text="@string/login_title"
-        android:textColor="@android:color/white"
-        android:textStyle="bold" />
-    <TextView
-        android:id="@+id/tv_forgot_password"
-        style="@style/viewCustom"
-        android:layout_below="@id/btn_login"
-        android:clickable="true"
-        android:gravity="center_horizontal"
-        android:text="Forgot Password?"
-        android:textSize="20sp" />
-    <Button
-        android:id="@+id/btn_register_account"
-        style="@style/viewCustom"
-        android:layout_alignParentBottom="true"
         android:background="@color/colorAccent"
         android:text="@string/create_act"
         android:textColor="@android:color/white"
         android:textStyle="bold" />
+
 </RelativeLayout>
