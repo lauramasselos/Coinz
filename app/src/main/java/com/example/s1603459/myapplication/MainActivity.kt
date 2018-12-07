@@ -299,8 +299,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         when (item.itemId) {
             R.id.navigation_home -> {
                 message.setText(R.string.title_home)
-                    val intent = Intent(this, HomeActivity::class.java)
-                    startActivity(intent)
+                val intent = Intent(this, LoginActivity::class.java)
+                startActivity(intent)
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_map-> {

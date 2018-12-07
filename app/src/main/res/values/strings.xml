@@ -29,20 +29,4 @@
     <string name="login_title">Login</string>
     <string name="create_act">Create Account</string>
     <string name="send_email_to_reset_password">Send email to reset password</string>
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-=======
-
-    <string name="sign_up">Sign Up</string>
-    <string name="hint_password">password</string>
-    <string name="hint_email">email</string>
-    <string name="sign_in">Sign In</string>
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 </resources>

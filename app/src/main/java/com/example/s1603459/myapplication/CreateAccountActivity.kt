@@ -78,31 +78,31 @@ class CreateAccountActivity : AppCompatActivity() {
             mProgressBar!!.setMessage("Registering User...")
             mProgressBar!!.show()
             mAuth!!.createUserWithEmailAndPassword(email!!, password!!).addOnCompleteListener(this) { task ->
-                        mProgressBar!!.hide()
-                        if (task.isSuccessful) {
-                            // Sign in success, update UI with the signed-in user's information
-                            Log.d(TAG, "createUserWithEmail:success")
-                            val user = mAuth!!.currentUser
-                            val usersEmail = user!!.email
-                            firestoreUsers = firestore?.collection(COLLECTION_KEY)?.document(usersEmail!!)
+                mProgressBar!!.hide()
+                if (task.isSuccessful) {
+                    // Sign in success, update UI with the signed-in user's information
+                    Log.d(TAG, "createUserWithEmail:success")
+                    val user = mAuth!!.currentUser
+                    val usersEmail = user!!.email
+                    firestoreUsers = firestore?.collection(COLLECTION_KEY)?.document(usersEmail!!)
 //                            val userId = user!!.uid
-                            //Verify Email
-                            verifyEmail()
-                            //update user profile information
+                    //Verify Email
+                    verifyEmail()
+                    //update user profile information
 //                            val currentUserDb = mDatabaseReference!!.child(userId)
 //                            currentUserDb.child("firstName").setValue(firstName)
 //                            currentUserDb.child("lastName").setValue(lastName)
-                            updateUserInfoAndUI()
+                    updateUserInfoAndUI()
 
-                            val name = "" + firstName + " " + lastName
-                            writeNewUser(user!!.uid, name, user.email)
-                        } else {
-                            // If sign in fails, display a message to the user.
-                            Log.w(TAG, "createUserWithEmail:failure", task.exception)
-                            Toast.makeText(this@CreateAccountActivity, "Account already exists!",
-                                    Toast.LENGTH_SHORT).show()
-                        }
-                    }
+                    val name = "" + firstName + " " + lastName
+                    writeNewUser(user!!.uid, name, user.email)
+                } else {
+                    // If sign in fails, display a message to the user.
+                    Log.w(TAG, "createUserWithEmail:failure", task.exception)
+                    Toast.makeText(this@CreateAccountActivity, "Account already exists!",
+                            Toast.LENGTH_SHORT).show()
+                }
+            }
 
         } else {
             Toast.makeText(this, "Enter all details", Toast.LENGTH_SHORT).show()
@@ -124,8 +124,8 @@ class CreateAccountActivity : AppCompatActivity() {
         firestoreUsers?.set(newUser)?.addOnSuccessListener{
             Log.d(TAG, "User added to database")}
                 ?.addOnFailureListener{
-            Log.d(TAG, "Failed to add user")
-        }
+                    Log.d(TAG, "Failed to add user")
+                }
     }
 
 
@@ -156,17 +156,17 @@ class CreateAccountActivity : AppCompatActivity() {
     private fun verifyEmail() {
         val mUser = mAuth!!.currentUser;
         mUser!!.sendEmailVerification().addOnCompleteListener(this) { task ->
-                    if (task.isSuccessful) {
-                        Toast.makeText(this@CreateAccountActivity,
-                                "Verification email sent to " + mUser.email,
-                                Toast.LENGTH_SHORT).show()
-                    } else {
-                        Log.e(tag, "sendEmailVerification", task.exception)
-                        Toast.makeText(this@CreateAccountActivity,
-                                "Failed to send verification email.",
-                                Toast.LENGTH_SHORT).show()
-                    }
-                }
+            if (task.isSuccessful) {
+                Toast.makeText(this@CreateAccountActivity,
+                        "Verification email sent to " + mUser.email,
+                        Toast.LENGTH_SHORT).show()
+            } else {
+                Log.e(tag, "sendEmailVerification", task.exception)
+                Toast.makeText(this@CreateAccountActivity,
+                        "Failed to send verification email.",
+                        Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun updateUserInfoAndUI() {
@@ -189,4 +189,3 @@ class CreateAccountActivity : AppCompatActivity() {
     }
 
 }
-
