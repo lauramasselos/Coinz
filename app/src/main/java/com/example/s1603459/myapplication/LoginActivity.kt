@@ -1,7 +1,9 @@
 package com.example.s1603459.myapplication
 
 import android.app.ProgressDialog
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.*
@@ -33,9 +35,22 @@ class LoginActivity : AppCompatActivity() {
     //Firebase references
     private var mAuth: FirebaseAuth? = null
 
+    private lateinit var user: FirebaseUser
+
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+        mAuth = FirebaseAuth.getInstance()
+        mProgressBar = ProgressDialog(this)
+        if (mAuth != null) {
+            mProgressBar!!.setMessage("Logging you in...")
+            mProgressBar!!.show()
+            val intent = Intent(this@LoginActivity, MainActivity::class.java)
+            startActivity(intent)
+        }
         initialise()
     }
     private fun initialise() {
@@ -44,8 +59,7 @@ class LoginActivity : AppCompatActivity() {
         etPassword = findViewById<View>(R.id.et_password) as EditText
         btnLogin = findViewById<View>(R.id.btn_login) as Button
         btnCreateAccount = findViewById<View>(R.id.btn_register_account) as Button
-        mProgressBar = ProgressDialog(this)
-        mAuth = FirebaseAuth.getInstance()
+
         tvForgotPassword!!
                 .setOnClickListener { startActivity(Intent(this@LoginActivity,
                         ForgottenPasswordActivity::class.java)) }
@@ -54,6 +68,8 @@ class LoginActivity : AppCompatActivity() {
                         CreateAccountActivity::class.java)) }
         btnLogin!!.setOnClickListener { loginUser() }
     }
+
+
 
     private fun loginUser() {
         email = etEmail?.text.toString()
