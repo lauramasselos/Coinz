@@ -19,6 +19,9 @@ import com.google.firebase.firestore.FirebaseFirestoreSettings
 
 class CreateAccountActivity : AppCompatActivity() {
 
+
+    private val TAG = "CreateAccountActivity"
+
     //UI elements
     private var etFirstName: EditText? = null
     private var etLastName: EditText? = null
@@ -29,16 +32,11 @@ class CreateAccountActivity : AppCompatActivity() {
 
     //Firebase references
     private lateinit var mDatabaseReference: DatabaseReference
-
     private var mDatabase: FirebaseDatabase? = null
     private var mAuth: FirebaseAuth? = null
-
     private var firestore: FirebaseFirestore? = null
     private var firestoreUsers: DocumentReference? = null
 
-
-
-    private val TAG = "CreateAccountActivity"
     //global variables
     private var firstName: String? = null
     private var lastName: String? = null
@@ -85,17 +83,12 @@ class CreateAccountActivity : AppCompatActivity() {
                     val user = mAuth!!.currentUser
                     val usersEmail = user!!.email
                     firestoreUsers = firestore?.collection(COLLECTION_KEY)?.document(usersEmail!!)
-//                            val userId = user!!.uid
                     //Verify Email
                     verifyEmail()
-                    //update user profile information
-//                            val currentUserDb = mDatabaseReference!!.child(userId)
-//                            currentUserDb.child("firstName").setValue(firstName)
-//                            currentUserDb.child("lastName").setValue(lastName)
                     updateUserInfoAndUI()
 
                     val name = "" + firstName + " " + lastName
-                    writeNewUser(user!!.uid, name, user.email)
+                    writeNewUser(user.uid, name, user.email)
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "createUserWithEmail:failure", task.exception)
@@ -171,7 +164,7 @@ class CreateAccountActivity : AppCompatActivity() {
 
     private fun updateUserInfoAndUI() {
         //start next activity
-        val intent = Intent(this@CreateAccountActivity, MainActivity::class.java)
+        val intent = Intent(this@CreateAccountActivity, LoginActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         startActivity(intent)
     }

@@ -37,6 +37,13 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
         initialise()
+        val user = mAuth!!.currentUser
+        Log.d(TAG, "[onCreate] ${user.toString()}")
+        if (user != null) {
+            mProgressBar!!.setMessage("Logging you in...")
+            mProgressBar!!.show()
+            startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+        }
     }
     private fun initialise() {
         tvForgotPassword = findViewById<View>(R.id.tv_forgot_password) as TextView

@@ -41,7 +41,7 @@ class ForgottenPasswordActivity : AppCompatActivity() {
                             val message = "Email sent."
                             Log.d(TAG, message)
                             Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-                            updateUI()
+                            updateToLoginUI()
                         } else {
                             Log.w(TAG, task.exception!!.message)
                             Toast.makeText(this, "No user found with this email.", Toast.LENGTH_SHORT).show()
@@ -51,7 +51,7 @@ class ForgottenPasswordActivity : AppCompatActivity() {
             Toast.makeText(this, "Enter Email", Toast.LENGTH_SHORT).show()
         }
     }
-    private fun updateUI() {
+    private fun updateToLoginUI() {
         val intent = Intent(this@ForgottenPasswordActivity, LoginActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         startActivity(intent)
