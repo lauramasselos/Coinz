@@ -77,6 +77,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private var locationEngine: LocationEngine? = null
     private var locationLayerPlugin: LocationLayerPlugin? = null
 
+    private var coinsCollected: ArrayList<String> = ArrayList<String>()
+
     //Firebase references
     private var mDatabaseReference: DatabaseReference? = null
     private var mDatabase: FirebaseDatabase? = null
@@ -115,7 +117,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     private fun initialise() {
         mDatabase = FirebaseDatabase.getInstance()
-        mDatabaseReference = mDatabase!!.reference!!.child("Users/Wallet")
+        mDatabaseReference = mDatabase!!.reference.child("Users/Wallet")
         mAuth = FirebaseAuth.getInstance()
         user = mAuth!!.currentUser
         name = user?.displayName
@@ -124,7 +126,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         btnLogout = findViewById<View>(R.id.signOutBtn) as Button
         btnLogout!!.setOnClickListener { signOut() }
         firestore = FirebaseFirestore.getInstance()
-// Use com.google.firebase.Timestamp objects instead of java.util.Date objects
         val settings = FirebaseFirestoreSettings.Builder().setTimestampsInSnapshotsEnabled(true).build()
         firestore?.firestoreSettings = settings
         firestoreWallet = firestore?.collection(COLLECTION_KEY)?.document(email!!)?.collection(SUB_COLLECTION_KEY) // path Users/<user>/Wallet
@@ -169,6 +170,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     override fun downloadComplete(result: String) {
         Log.d(tag, "[downloadComplete]")
         GeoJSONFeatureCollection = FeatureCollection.fromJson(result)
+        firestoreWallet?.get()?.addOnSuccessListener { wallet ->
+            for (coin in wallet) {
+                coinsCollected.add(coin.id)
+                Log.d(tag, "Coin ID is" + coin.id)
+            }
+            dropMarkers(GeoJSONFeatureCollection)
+            Log.d(tag, "Collection $coinsCollected")
+        }?.addOnFailureListener{
+            dropMarkers(GeoJSONFeatureCollection)
+            Log.d(tag, "Error getting wallet")
+        }
+
+    }
+
+
+    private fun dropMarkers(GeoJSONFeatureCollection:FeatureCollection) {
         val features = GeoJSONFeatureCollection.features()
         for (Feature in features!!) {
             val coordinates = (Feature.geometry() as Point).coordinates()
@@ -176,11 +193,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             val currency = jsonObject?.get("currency").toString()
             val value = jsonObject?.get("value").toString()
             val id = jsonObject?.get("id").toString()
-//                val icon = IconFactory.getInstance(this)
-//                val coin = icon.fromResource(R.drawable.new_coin)
-            val marker = map.addMarker(MarkerOptions().position(LatLng(coordinates[1], coordinates[0])).title(currency).snippet(value))
-            markers.put(id, marker)
-            Log.d(tag, "[downloadComplete] added marker")
+                val icon = IconFactory.getInstance(this)
+                val coin = icon.fromResource(R.drawable.pixelcoin)
+            if (!coinsCollected.contains(id)) {
+                val marker = map.addMarker(MarkerOptions().position(LatLng(coordinates[1], coordinates[0])).title(currency).snippet(value).icon(coin))
+                markers.put(id, marker)
+            } else {
+                Log.d(tag, "Coin $id already collected!")
+            }
         }
     }
 
@@ -242,12 +262,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             markerLocation.longitude = marker.value.position.longitude
             val distanceToMarker = location!!.distanceTo(markerLocation)
             if (distanceToMarker <= 25) {
-                marker.value.remove()
                 markersRemoved.put(marker.key, marker.value)
             }
         }
         for (marker in markersRemoved) {
             if (markers.containsKey(marker.key)) {
+                marker.value.remove()
                 markers.remove(marker.key)
                 addCoinToWallet(marker.key)
             }
@@ -364,15 +384,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
             R.id.navigation_home -> {
-                message.setText(R.string.title_home)
+                startActivity(Intent(this@MainActivity, ProfileActivity::class.java))
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_map-> {
-                message.setText(R.string.title_map)
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_bank -> {
-                message.setText(R.string.title_bank)
                 return@OnNavigationItemSelectedListener true
             }
         }
