@@ -92,13 +92,10 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         btnBank!!.setOnClickListener{
             // Initialize a new instance of
             val builder = AlertDialog.Builder(this@BankActivity)
-
             // Set the alert dialog title
             builder.setTitle("Convert to Gold")
-
             // Display a message on alert dialog
             builder.setMessage("Are you want to bank this coin?")
-
             // Set a positive button and its click listener on alert dialog
             builder.setPositiveButton("Yes"){dialog, which ->
                 // Do something when user press the positive button
@@ -107,12 +104,10 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 Log.d(tag, "[initialise] btnBank")
 
             }
-
             // Display a negative button on alert dialog
             builder.setNegativeButton("No"){dialog,which ->
 //                Toast.makeText(applicationContext,"You are not agree.",Toast.LENGTH_SHORT).show()
             }
-
 //
 //            // Display a neutral button on alert dialog
 //            builder.setNeutralButton("Transfer"){_,_ ->
@@ -126,11 +121,6 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             dialog.show()
         }
 
-
-
-
-//
-//            fetchCoin() }
 
     }
 
