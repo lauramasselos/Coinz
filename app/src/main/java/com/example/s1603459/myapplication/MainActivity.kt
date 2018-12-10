@@ -47,6 +47,7 @@ import com.mapbox.mapboxsdk.camera.CameraUpdate
 import com.mapbox.mapboxsdk.style.light.Position
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import kotlinx.android.synthetic.main.activity_main.*
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -80,12 +81,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private var coinsCollected: ArrayList<String> = ArrayList<String>()
 
     //Firebase references
-    private var mDatabaseReference: DatabaseReference? = null
     private var mDatabase: FirebaseDatabase? = null
     private var mAuth: FirebaseAuth? = null
     private var user: FirebaseUser? = null
     private var firestore: FirebaseFirestore? = null
     private var firestoreWallet: CollectionReference? = null
+    private var firestoreExchangeRates: DocumentReference? = null
 
 
 
@@ -117,7 +118,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     private fun initialise() {
         mDatabase = FirebaseDatabase.getInstance()
-        mDatabaseReference = mDatabase!!.reference.child("Users/Wallet")
         mAuth = FirebaseAuth.getInstance()
         user = mAuth!!.currentUser
         name = user?.displayName
@@ -129,6 +129,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         val settings = FirebaseFirestoreSettings.Builder().setTimestampsInSnapshotsEnabled(true).build()
         firestore?.firestoreSettings = settings
         firestoreWallet = firestore?.collection(COLLECTION_KEY)?.document(email!!)?.collection(SUB_COLLECTION_KEY) // path Users/<user>/Wallet
+        firestoreExchangeRates = firestore?.collection("Exchange Rates")?.document("Today's Exchange Rate")
 //        realtimeUpdateListener()
     }
 
@@ -169,6 +170,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     override fun downloadComplete(result: String) {
         Log.d(tag, "[downloadComplete]")
+        storeExchangeRates(result)
         GeoJSONFeatureCollection = FeatureCollection.fromJson(result)
         firestoreWallet?.get()?.addOnSuccessListener { wallet ->
             for (coin in wallet) {
@@ -185,13 +187,32 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     }
 
 
+    private fun storeExchangeRates(result: String) {
+        val jsonObject = JSONObject(result)
+        val jsonRates = jsonObject.getJSONObject("rates")
+
+        val newER = mapOf(
+                "SHIL" to jsonRates.get("SHIL"),
+                "DOLR" to jsonRates.get("DOLR"),
+                "QUID" to jsonRates.get("QUID"),
+                "PENY" to jsonRates.get("PENY")
+        )
+
+       firestoreExchangeRates?.set(newER)?.addOnSuccessListener {
+           Log.d(tag, "Exchange rates updated for $downloadDate on Firebase")
+       }?.addOnFailureListener{
+           Log.d(tag, "Failed to set exchange rates for $downloadDate")
+       }
+    }
+
+
     private fun dropMarkers(GeoJSONFeatureCollection:FeatureCollection) {
         val features = GeoJSONFeatureCollection.features()
         for (Feature in features!!) {
             val coordinates = (Feature.geometry() as Point).coordinates()
             val jsonObject = Feature.properties()
-            val currency = jsonObject?.get("currency").toString()
-            val value = jsonObject?.get("value").toString()
+            val currency = (jsonObject?.get("currency").toString()).replace("\"", "")
+            val value = (jsonObject?.get("value").toString()).replace("\"", "")
             val id = jsonObject?.get("id").toString()
                 val icon = IconFactory.getInstance(this)
                 val coin = icon.fromResource(R.drawable.pixelcoin)
@@ -292,7 +313,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                 ID_FIELD to coinId,
                 VALUE_FIELD to value,
                 CURRENCY_FIELD to currency,
-                DATE_FIELD to downloadDate
+                DATE_FIELD to downloadDate,
+                IS_BANKED_FIELD to false
         )
 
 
@@ -391,6 +413,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_bank -> {
+                startActivity(Intent(this@MainActivity, BankActivity::class.java))
                 return@OnNavigationItemSelectedListener true
             }
         }
@@ -401,11 +424,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         private const val tag = "MainActivity"
         private const val COLLECTION_KEY = "Users"
         private const val SUB_COLLECTION_KEY = "Wallet"
-        private const val DOCUMENT_KEY = "Coin"
         private const val ID_FIELD = "ID"
         private const val VALUE_FIELD = "Value"
         private const val CURRENCY_FIELD = "Currency"
         private const val DATE_FIELD = "Date collected"
+        private const val IS_BANKED_FIELD = "Banked?"
     }
 
 

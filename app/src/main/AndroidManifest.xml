@@ -23,7 +23,8 @@
         </activity>
         <activity android:name=".CreateAccountActivity" />
         <activity android:name=".ForgottenPasswordActivity" />
-        <activity android:name=".ProfileActivity"></activity>
+        <activity android:name=".ProfileActivity" />
+        <activity android:name=".BankActivity"></activity>
     </application>
 
 </manifest>

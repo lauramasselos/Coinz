@@ -26,14 +26,15 @@ class ProfileActivity : AppCompatActivity() {
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_bank -> {
+                startActivity(Intent(this@ProfileActivity, BankActivity::class.java))
                 return@OnNavigationItemSelectedListener true
             }
 
         }
         false
     }
-    Menu menu = navigation.getMenu();
-    MenuItem menuItem = menu.getItem(INSERT_INDEX_HERE);
-    menuItem.setChecked(true);
+//    Menu menu = navigation.getMenu();
+//    MenuItem menuItem = menu.getItem(INSERT_INDEX_HERE);
+//    menuItem.setChecked(true);
 
 }
