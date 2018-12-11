@@ -314,7 +314,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                 VALUE_FIELD to value,
                 CURRENCY_FIELD to currency,
                 DATE_FIELD to downloadDate,
-                IS_BANKED_FIELD to false
+                IS_BANKED_FIELD to false,
+                COLLECTED_BY_USER_FIELD to true
         )
 
 
@@ -429,6 +430,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         private const val CURRENCY_FIELD = "Currency"
         private const val DATE_FIELD = "Date collected"
         private const val IS_BANKED_FIELD = "Banked?"
+        private const val COLLECTED_BY_USER_FIELD = "Collected by user?"
     }
 
 

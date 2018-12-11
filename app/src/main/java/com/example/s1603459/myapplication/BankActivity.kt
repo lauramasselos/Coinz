@@ -45,6 +45,8 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     private lateinit var coin: String
     private lateinit var uniqueCoinId: String
 
+    private var coinsBankedTodayUserCollected: Int = 0
+
     private var mAuth: FirebaseAuth? = null
     private var user: FirebaseUser? = null
     private var firestore: FirebaseFirestore? = null
@@ -181,17 +183,38 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         firestoreWallet?.get()?.addOnSuccessListener { firebaseWallet ->
             val currency = spinner.selectedItem.toString().substring(0, 4)
             val value = spinner.selectedItem.toString().substring(6)
+
             Log.d(tag, "Currency $currency with value $value")
+
             for (coin in firebaseWallet) {
-                Log.d(tag, "[fetchCoin] Currency on firebase is ${coin.data.get("Currency")}; Currency on spinner is $currency")
-                if (currency == coin.data.get("Currency").toString().replace("\"", "") && value == coin.data.get("Value").toString().replace("\"", "")) {
+                val isCollectedByUser = coin.data.get(COLLECTED_BY_USER_FIELD) as Boolean
+
+
+                Log.d(tag, "[fetchCoin] first FOR loop ${coin.data.get(DATE_FIELD)} == $todaysDate ${coin.data.get(DATE_FIELD) == todaysDate} && ($isCollectedByUser) ${isCollectedByUser==true} && ${coin.data.get(IS_BANKED_FIELD) ==false}")
+
+
+
+                if (coin.data.get(DATE_FIELD) == todaysDate && isCollectedByUser == true && coin.data.get(IS_BANKED_FIELD) == false) {
+//                    Log.d(tag, "[fetchCoin] first FOR loop ${coin.data.get(DATE_FIELD)} == $todaysDate && ($isCollectedByUser) ${isCollectedByUser==true.toString()}")
+                    coinsBankedTodayUserCollected++
+                }
+            }
+
+            Log.d(tag, "[fetchCoin] coinsBankedTodayUserCollected = $coinsBankedTodayUserCollected")
+
+            for (coin in firebaseWallet) {
+                Log.d(tag, "[fetchCoin] Currency on firebase is ${coin.data.get(CURRENCY_FIELD)}; Currency on spinner is $currency")
+                val isCollectedByUser = coin.data.get(COLLECTED_BY_USER_FIELD).toString()
+                if (currency == coin.data.get(CURRENCY_FIELD).toString().replace("\"", "") && value == coin.data.get(VALUE_FIELD).toString().replace("\"", "")) {
 //                    uniqueCoinId = coin.id
-                    if (coin.data.get("Banked?") == true) {
+                    if (coin.data.get(IS_BANKED_FIELD) == true) {
                         Toast.makeText(this, "You just banked this coin!", Toast.LENGTH_SHORT).show()
                         /////////////////////////////////////////////////////////////////////////////////////////// ADD IF CONDITION HERE TO LIMIT MAX 25 BANKED PER DAY
+                    } else if (coinsBankedTodayUserCollected >= 25) {
+                        Toast.makeText(this, "You have already banked 25 of your own coins today!", Toast.LENGTH_SHORT).show()
                     } else {
-                        Log.d(tag, "[fetchCoin] id is ${coin.id} currency is $currency value is $value") // THIS IS NOT BEING CALLED
-                        bankCoin(coin.id, currency, value)
+                        Log.d(tag, "[fetchCoin] id is ${coin.id} currency is $currency value is $value")
+                        bankCoin(coin.id, currency, value, isCollectedByUser)
                         break
                     }
                 }
@@ -203,7 +226,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
     }
 
-    private fun bankCoin(id: String, currency: String, value: String) {
+    private fun bankCoin(id: String, currency: String, value: String, isCollectedByUser: String) {
         firestoreExchangeRates!!.get().addOnSuccessListener { rates ->
 //            Log.d(tag, "Exchange rate for $currency is ${rates.get(currency)}")
             val exchangeRate = rates.get(currency) as Double
@@ -211,8 +234,9 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             val bankedCoin = mapOf(
                     ID_FIELD to id,
                     "GOLD" to gold,
-                    "Date Banked" to todaysDate,
-                    "Banked?" to true
+                    DATE_BANKED_FIELD to todaysDate,
+                    IS_BANKED_FIELD to true,
+                    COLLECTED_BY_USER_FIELD to isCollectedByUser.toBoolean()
 
             )
 
@@ -223,7 +247,8 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                     VALUE_FIELD to value,
                     CURRENCY_FIELD to currency,
                     DATE_FIELD to todaysDate,
-                    IS_BANKED_FIELD to true
+                    IS_BANKED_FIELD to true,
+                    COLLECTED_BY_USER_FIELD to isCollectedByUser.toBoolean()
             )
 
             modifyWallet(id, modifiedCoin)
@@ -303,11 +328,15 @@ companion object {
     private const val VALUE_FIELD = "Value"
     private const val CURRENCY_FIELD = "Currency"
     private const val DATE_FIELD = "Date collected"
+    private const val DATE_BANKED_FIELD = "Date banked"
     private const val IS_BANKED_FIELD = "Banked?"
+    private const val COLLECTED_BY_USER_FIELD = "Collected by user?"
+
+    }
 }
 
 
-}
+
 /*
 package com.example.s1603459.myapplication
 
