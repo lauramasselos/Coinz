@@ -174,8 +174,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         GeoJSONFeatureCollection = FeatureCollection.fromJson(result)
         firestoreWallet?.get()?.addOnSuccessListener { wallet ->
             for (coin in wallet) {
-                coinsCollected.add(coin.id)
-                Log.d(tag, "Coin ID is" + coin.id)
+                if (coin.data.get(COLLECTED_BY_USER_FIELD) == "true") {
+                    coinsCollected.add(coin.id)
+                }
             }
             dropMarkers(GeoJSONFeatureCollection)
             Log.d(tag, "Collection $coinsCollected")
@@ -309,16 +310,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             }
         }
 
-//        val newCoin = mapOf(
-//                ID_FIELD to coinId,
-//                VALUE_FIELD to value,
-//                CURRENCY_FIELD to currency,
-//                DATE_FIELD to downloadDate,
-//                IS_BANKED_FIELD to false,
-//                COLLECTED_BY_USER_FIELD to true
-//        )
-
-        val newCoin = Coin(coinId, "false", "true", currency, downloadDate, value)
+        val newCoin = Coin(coinId, "false", "true", currency, downloadDate, value, "false")
 
 
 
@@ -433,6 +425,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         private const val DATE_FIELD = "dateCollected"
         private const val IS_BANKED_FIELD = "banked"
         private const val COLLECTED_BY_USER_FIELD = "collectedByUser"
+        private const val TRANSFER_FIELD = "transferred"
     }
 
 

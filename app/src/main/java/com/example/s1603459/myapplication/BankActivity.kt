@@ -95,6 +95,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         btnTransfer!!.setOnClickListener{
 
             firestoreWallet!!.get().addOnSuccessListener { firebaseWallet ->
+                coinsBankedTodayUserCollected = 0
                 val coinSelected = spinner.selectedItem as Coin
                 for (coin in firebaseWallet) {
                      if (coin.data.get(DATE_BANKED_FIELD) == todaysDate && coin.data.get(COLLECTED_BY_USER_FIELD) == "true" && coin.data.get(IS_BANKED_FIELD) == "true") {
@@ -199,24 +200,40 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                     val currency = coin.data.get(CURRENCY_FIELD).toString().replace("\"", "")
                     val date = coin.data.get(DATE_FIELD).toString().replace("\"", "")
                     val value = coin.data.get(VALUE_FIELD).toString().replace("\"", "")
-                    val newCoin = Coin(id, banked, collectedByUser, currency, date, value)
-                    if (banked == "false"){
+                    val transferred = coin.data.get(TRANSFER_FIELD).toString().replace("\"", "")
+                    val newCoin = Coin(id, banked, collectedByUser, currency, date, value, transferred)
+                    if (banked == "false" && ((transferred == "true" && collectedByUser == "false") || (transferred == "false" && collectedByUser == "true"))){
+                        Log.d(tag, "[getCoinIds] inside if statement")
                         walletOfCoins.add(newCoin)
                     }
                 }
+                Log.d(tag, "[getCoinIds] Wallet is $walletOfCoins")
+
                 addCoinsToSpinner(walletOfCoins)
-            }
-        }
+             }
+    }
 
         private fun addCoinsToSpinner(wallet: ArrayList<Coin>) {
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, wallet)
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
+            if (wallet.isEmpty()) {
+                Log.d(tag, "[addCoinsToSpinner] Wallet is empty")
+                val emptyWalletList = ArrayList<String>()
+                emptyWalletList.add("Wallet is empty!")
+                val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, emptyWalletList)
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                spinner.adapter = adapter
+            } else {
+                Log.d(tag, "[addCoinsToSpinner] Wallet is $wallet")
+                val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, wallet)
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                spinner.adapter = adapter
+            }
+
     }
 
     private fun fetchCoin() {
         Log.d(tag, "Selected ${spinner.selectedItem}")
         firestoreWallet?.get()?.addOnSuccessListener { firebaseWallet ->
+            coinsBankedTodayUserCollected = 0
             val coinSelected = spinner.selectedItem as Coin
             for (coin in firebaseWallet) {
                 if (coin.data.get(DATE_BANKED_FIELD) == todaysDate && coin.data.get(COLLECTED_BY_USER_FIELD) == "true" && coin.data.get(IS_BANKED_FIELD) == "true") {
@@ -267,6 +284,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
                 val coinSelected = spinner.selectedItem as Coin
                 coinSelected.collectedByUser = "false"
+                coinSelected.transferred = "true"
                 Log.d(tag, "Coin is $coinSelected")
 
 
@@ -276,8 +294,10 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                     Log.d(tag, "[transferTo] Error adding coin to $friendEmail wallet")
                 }
 
-                firestoreWallet?.document(coinSelected.id)?.delete()?.addOnSuccessListener {
-                    Log.d(tag, "[transferTo] Coin removed from user's wallet")
+                coinSelected.collectedByUser = "true"
+
+                firestoreWallet?.document(coinSelected.id)?.set(coinSelected)?.addOnSuccessListener {
+                    Log.d(tag, "[transferTo] Coin removed from user's display wallet")
                     Toast.makeText(this, "Coin sent to $friendEmail!", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this, BankActivity::class.java))
                 }?.addOnFailureListener{
@@ -302,15 +322,16 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
             )
 
-            banked(coin.id, bankedCoin)
+            firestoreBanked?.document(coin.id)?.set(bankedCoin)?.addOnSuccessListener {
+                Toast.makeText(this, "Coin banked", Toast.LENGTH_SHORT).show()
+
+            }?.addOnFailureListener{
+                Log.d(tag, "Failed to bank coin")
+            }
 
             val modifiedCoin = mapOf(
-                    ID_FIELD to coin.id,
-                    VALUE_FIELD to coin.value,
-                    CURRENCY_FIELD to coin.currency,
                     DATE_BANKED_FIELD to todaysDate,
-                    IS_BANKED_FIELD to "true",
-                    COLLECTED_BY_USER_FIELD to coin.collectedByUser
+                    IS_BANKED_FIELD to "true"
             )
 
             firestoreWallet?.document(coin.id)?.update(modifiedCoin)
@@ -318,18 +339,6 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
         }.addOnFailureListener{
             Log.d(tag, "Error getting exchange rates")
-        }
-    }
-
-    private fun banked(id: String, bankedCoin: Map<String, Any>) {
-        Log.d(tag, "[banked] $id")
-        firestoreBanked?.document(id)
-                ?.set(bankedCoin)
-                ?.addOnSuccessListener {
-            Toast.makeText(this, "Coin banked", Toast.LENGTH_SHORT).show()
-
-        }?.addOnFailureListener{
-            Log.d(tag, "Failed to bank coin")
         }
     }
 
@@ -383,6 +392,7 @@ companion object {
     private const val IS_BANKED_FIELD = "banked"
     private const val COLLECTED_BY_USER_FIELD = "collectedByUser"
     private const val DATE_BANKED_FIELD = "dateBanked"
+    private const val TRANSFER_FIELD = "transferred"
 
     }
 }
