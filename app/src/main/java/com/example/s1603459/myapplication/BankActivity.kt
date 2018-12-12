@@ -14,10 +14,7 @@ import android.widget.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.*
 import kotlinx.android.synthetic.main.activity_main.*
 import org.w3c.dom.Text
 import java.text.SimpleDateFormat
@@ -37,6 +34,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     private var btnBank: Button? = null
 
     private var wallet: HashMap<String, String> = HashMap<String, String>()
+    private var walletOfCoins: ArrayList<Coin> = ArrayList()
     private var walletCopy: HashMap<String, String> = HashMap<String, String>()
 
     private lateinit var name: String
@@ -140,43 +138,41 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
     private fun setRate(currency: String, exchangeRate: Double){
         Log.d(tag, "[setRate] $exchangeRate")
-        if (currency.equals("SHIL")) {
-            shilText!!.text = "1 SHIL = $exchangeRate GOLD"
-        }
-        if (currency.equals("DOLR")) {
-            dolrText!!.text = "1 DOLR = $exchangeRate GOLD"
-        }
-        if (currency.equals("QUID")) {
-            quidText!!.text = "1 QUID = $exchangeRate GOLD"
-        }
-        if (currency.equals("PENY")) {
-            penyText!!.text = "1 PENY = $exchangeRate GOLD"
+        when(currency) {
+            "SHIL" -> shilText!!.text = "1 SHIL = $exchangeRate GOLD"
+            "DOLR" -> dolrText!!.text = "1 DOLR = $exchangeRate GOLD"
+            "QUID" -> quidText!!.text = "1 QUID = $exchangeRate GOLD"
+            "PENY" -> penyText!!.text = "1 PENY = $exchangeRate GOLD"
         }
     }
 
     private fun getCoinIds() {
-        firestoreWallet?.get()?.addOnSuccessListener { firebaseWallet ->
-            for (coin in firebaseWallet) {
-                val coinEntry = ("" + coin.data.get("Currency") + ": " + coin.data.get("Value")).replace("\"", "")
-                val id = coin.id
-                if (coin.data.get("Banked?") == false) {
-                    wallet.put(id, coinEntry)
+            firestoreWallet?.get()?.addOnSuccessListener { firebaseWallet ->
+                for (coin in firebaseWallet) {
+                    val id = coin.id
+                    val banked = coin.data.get(IS_BANKED_FIELD).toString().replace("\"", "")
+                    val collectedByUser = coin.data.get(COLLECTED_BY_USER_FIELD).toString().replace("\"", "")
+                    val currency = coin.data.get(CURRENCY_FIELD).toString().replace("\"", "")
+                    val date = coin.data.get(DATE_FIELD).toString().replace("\"", "")
+                    val value = coin.data.get(VALUE_FIELD).toString().replace("\"", "")
+                    val newCoin = Coin(id, banked, collectedByUser, currency, date, value)
+                    walletOfCoins.add(newCoin)
                 }
-                Log.d(tag, "Coin currency and value: ${coin.data.get("Currency")}, ${coin.data.get("Value")}")
+                addCoinsToSpinner(walletOfCoins)
             }
-            addCoinsToSpinner(wallet)
         }
-    }
 
-
-    private fun addCoinsToSpinner(wallet: HashMap<String, String>) {
-        var walletArray = ArrayList<String>()
-        for (coin in wallet) {
-            walletArray.add(coin.value)
-        }
-        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, walletArray)
+        private fun addCoinsToSpinner(wallet: ArrayList<Coin>) {
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, wallet)
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = adapter
     }
+
+
+
+
+
+
 
     private fun fetchCoin() {
         Log.d(tag, "Selected ${spinner.selectedItem}")
@@ -187,14 +183,14 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             Log.d(tag, "Currency $currency with value $value")
 
             for (coin in firebaseWallet) {
-                val isCollectedByUser = coin.data.get(COLLECTED_BY_USER_FIELD) as Boolean
+                val isCollectedByUser = coin.data.get(COLLECTED_BY_USER_FIELD)
 
 
-                Log.d(tag, "[fetchCoin] first FOR loop ${coin.data.get(DATE_FIELD)} == $todaysDate ${coin.data.get(DATE_FIELD) == todaysDate} && ($isCollectedByUser) ${isCollectedByUser==true} && ${coin.data.get(IS_BANKED_FIELD) ==false}")
+                Log.d(tag, "[fetchCoin] first FOR loop ${coin.data.get(DATE_FIELD)} == $todaysDate ${coin.data.get(DATE_FIELD) == todaysDate} && ($isCollectedByUser) ${isCollectedByUser=="true"} && ${coin.data.get(IS_BANKED_FIELD) =="false"}")
 
 
 
-                if (coin.data.get(DATE_FIELD) == todaysDate && isCollectedByUser == true && coin.data.get(IS_BANKED_FIELD) == false) {
+                if (coin.data.get(DATE_FIELD) == todaysDate && isCollectedByUser == "true" && coin.data.get(IS_BANKED_FIELD) == "false") {
 //                    Log.d(tag, "[fetchCoin] first FOR loop ${coin.data.get(DATE_FIELD)} == $todaysDate && ($isCollectedByUser) ${isCollectedByUser==true.toString()}")
                     coinsBankedTodayUserCollected++
                 }
@@ -206,8 +202,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 Log.d(tag, "[fetchCoin] Currency on firebase is ${coin.data.get(CURRENCY_FIELD)}; Currency on spinner is $currency")
                 val isCollectedByUser = coin.data.get(COLLECTED_BY_USER_FIELD).toString()
                 if (currency == coin.data.get(CURRENCY_FIELD).toString().replace("\"", "") && value == coin.data.get(VALUE_FIELD).toString().replace("\"", "")) {
-//                    uniqueCoinId = coin.id
-                    if (coin.data.get(IS_BANKED_FIELD) == true) {
+                    if (coin.data.get(IS_BANKED_FIELD) == "true") {
                         Toast.makeText(this, "You just banked this coin!", Toast.LENGTH_SHORT).show()
                         /////////////////////////////////////////////////////////////////////////////////////////// ADD IF CONDITION HERE TO LIMIT MAX 25 BANKED PER DAY
                     } else if (coinsBankedTodayUserCollected >= 25) {
@@ -220,7 +215,6 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 }
             }
 
-//            bankCoin(uniqueCoinId, currency, value)
 
         }
 
@@ -235,8 +229,8 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                     ID_FIELD to id,
                     "GOLD" to gold,
                     DATE_BANKED_FIELD to todaysDate,
-                    IS_BANKED_FIELD to true,
-                    COLLECTED_BY_USER_FIELD to isCollectedByUser.toBoolean()
+                    IS_BANKED_FIELD to "true",
+                    COLLECTED_BY_USER_FIELD to isCollectedByUser
 
             )
 
@@ -246,13 +240,11 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                     ID_FIELD to id,
                     VALUE_FIELD to value,
                     CURRENCY_FIELD to currency,
-                    DATE_FIELD to todaysDate,
-                    IS_BANKED_FIELD to true,
-                    COLLECTED_BY_USER_FIELD to isCollectedByUser.toBoolean()
+                    IS_BANKED_FIELD to "true",
+                    COLLECTED_BY_USER_FIELD to isCollectedByUser
             )
 
             modifyWallet(id, modifiedCoin)
-
 
         }.addOnFailureListener{
             Log.d(tag, "Error getting exchange rates")
@@ -272,7 +264,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     }
 
     private fun modifyWallet(id: String, modifiedCoin: Map<String, Any>) {
-        firestoreWallet?.document(id)?.set(modifiedCoin)?.addOnSuccessListener {
+        firestoreWallet?.document(id)?.update(modifiedCoin)?.addOnSuccessListener {
             Log.d(tag, "Coin removed from wallet successfully")
 
         }?.addOnFailureListener{
@@ -281,23 +273,22 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     }
 
 
+    private fun displayCoinInformation(coin: Coin) {
+        val currency = coin.currency
+        val value = coin.value
+        val id = coin.id
+        val coinInfo = "Currency: $currency\nValue: $value\nID: $id"
+        Toast.makeText(this, coinInfo, Toast.LENGTH_LONG).show()
+    }
+
+
     override fun onNothingSelected(parent: AdapterView<*>?) {
         Toast.makeText(this, "Please select a coin to bank or transfer.", Toast.LENGTH_SHORT).show()
     }
 
     override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-
-//        coin = parent?.getItemAtPosition(position).toString()
-        firestoreWallet?.get()?.addOnSuccessListener { firebaseWallet ->
-            for (coin in firebaseWallet) {
-                val coinEntry = ("" + coin.data.get("Currency") + ": " + coin.data.get("Value")).replace("\"", "")
-                val id = coin.id
-                wallet.put(coinEntry, id)
-            }
-            Log.d(tag, "Selected coin ${parent?.getItemAtPosition(position)} at position $position with spinner item ${wallet.get(spinner.getItemAtPosition(position))}")
-            Toast.makeText(this, "Selected ${parent?.getItemAtPosition(position)} with ID ${wallet.get(parent?.getItemAtPosition(position))}", Toast.LENGTH_SHORT).show()
-        }
-
+            val coin = parent?.selectedItem as Coin
+            displayCoinInformation(coin)
     }
 
 
@@ -324,13 +315,13 @@ companion object {
     private const val tag = "BankActivity"
     private const val COLLECTION_KEY = "Users"
     private const val SUB_COLLECTION_KEY = "Wallet"
-    private const val ID_FIELD = "ID"
-    private const val VALUE_FIELD = "Value"
-    private const val CURRENCY_FIELD = "Currency"
-    private const val DATE_FIELD = "Date collected"
-    private const val DATE_BANKED_FIELD = "Date banked"
-    private const val IS_BANKED_FIELD = "Banked?"
-    private const val COLLECTED_BY_USER_FIELD = "Collected by user?"
+    private const val ID_FIELD = "id"
+    private const val VALUE_FIELD = "value"
+    private const val CURRENCY_FIELD = "currency"
+    private const val DATE_FIELD = "dateCollected"
+    private const val IS_BANKED_FIELD = "banked"
+    private const val COLLECTED_BY_USER_FIELD = "collectedByUser"
+    private const val DATE_BANKED_FIELD = "dateBanked"
 
     }
 }

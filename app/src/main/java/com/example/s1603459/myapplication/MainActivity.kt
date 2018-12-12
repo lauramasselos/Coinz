@@ -309,14 +309,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             }
         }
 
-        val newCoin = mapOf(
-                ID_FIELD to coinId,
-                VALUE_FIELD to value,
-                CURRENCY_FIELD to currency,
-                DATE_FIELD to downloadDate,
-                IS_BANKED_FIELD to false,
-                COLLECTED_BY_USER_FIELD to true
-        )
+//        val newCoin = mapOf(
+//                ID_FIELD to coinId,
+//                VALUE_FIELD to value,
+//                CURRENCY_FIELD to currency,
+//                DATE_FIELD to downloadDate,
+//                IS_BANKED_FIELD to false,
+//                COLLECTED_BY_USER_FIELD to true
+//        )
+
+        val newCoin = Coin(coinId, "false", "true", currency, downloadDate, value)
 
 
 
@@ -425,12 +427,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         private const val tag = "MainActivity"
         private const val COLLECTION_KEY = "Users"
         private const val SUB_COLLECTION_KEY = "Wallet"
-        private const val ID_FIELD = "ID"
-        private const val VALUE_FIELD = "Value"
-        private const val CURRENCY_FIELD = "Currency"
-        private const val DATE_FIELD = "Date collected"
-        private const val IS_BANKED_FIELD = "Banked?"
-        private const val COLLECTED_BY_USER_FIELD = "Collected by user?"
+        private const val ID_FIELD = "id"
+        private const val VALUE_FIELD = "value"
+        private const val CURRENCY_FIELD = "currency"
+        private const val DATE_FIELD = "dateCollected"
+        private const val IS_BANKED_FIELD = "banked"
+        private const val COLLECTED_BY_USER_FIELD = "collectedByUser"
     }
 
 
