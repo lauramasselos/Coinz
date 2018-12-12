@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.s1603459.myapplication
 
 import android.app.ProgressDialog
@@ -20,7 +22,7 @@ import com.google.firebase.firestore.FirebaseFirestoreSettings
 class CreateAccountActivity : AppCompatActivity() {
 
 
-    private val TAG = "CreateAccountActivity"
+    private val tag = "CreateAccountActivity"
 
     //UI elements
     private var etFirstName: EditText? = null
@@ -61,7 +63,7 @@ class CreateAccountActivity : AppCompatActivity() {
         btnCreateAccount = findViewById<View>(R.id.btn_register) as Button
         mProgressBar = ProgressDialog(this)
         mDatabase = FirebaseDatabase.getInstance()
-        mDatabaseReference = mDatabase!!.reference!!.child("Users")
+        mDatabaseReference = mDatabase!!.reference.child("Users")
         mAuth = FirebaseAuth.getInstance()
         btnCreateAccount!!.setOnClickListener { createNewAccount() }
     }
@@ -79,7 +81,7 @@ class CreateAccountActivity : AppCompatActivity() {
                 mProgressBar!!.hide()
                 if (task.isSuccessful) {
                     // Sign in success, update UI with the signed-in user's information
-                    Log.d(TAG, "createUserWithEmail:success")
+                    Log.d(tag, "createUserWithEmail:success")
                     val user = mAuth!!.currentUser
                     val usersEmail = user!!.email
                     firestoreUsers = firestore?.collection(COLLECTION_KEY)?.document(usersEmail!!)
@@ -87,11 +89,11 @@ class CreateAccountActivity : AppCompatActivity() {
                     verifyEmail()
                     updateUserInfoAndUI()
 
-                    val name = "" + firstName + " " + lastName
+                    val name = "$firstName $lastName"
                     writeNewUser(user.uid, name, user.email)
                 } else {
                     // If sign in fails, display a message to the user.
-                    Log.w(TAG, "createUserWithEmail:failure", task.exception)
+                    Log.w(tag, "createUserWithEmail:failure", task.exception)
                     Toast.makeText(this@CreateAccountActivity, "Account already exists!",
                             Toast.LENGTH_SHORT).show()
                 }
@@ -115,9 +117,9 @@ class CreateAccountActivity : AppCompatActivity() {
                 EMAIL_FIELD to email.toString())
 // send the message and listen for success or failure
         firestoreUsers?.set(newUser)?.addOnSuccessListener{
-            Log.d(TAG, "User added to database")}
+            Log.d(tag, "User added to database")}
                 ?.addOnFailureListener{
-                    Log.d(TAG, "Failed to add user")
+                    Log.d(tag, "Failed to add user")
                 }
     }
 
@@ -127,9 +129,6 @@ class CreateAccountActivity : AppCompatActivity() {
             when {
                 e != null -> Log.d(tag, "e != null")
                 documentSnapshot != null && documentSnapshot.exists() -> {
-                    with(documentSnapshot) {
-                        val incoming = "${data?.get(NAME_FIELD)}:${data?.get(EMAIL_FIELD)}"
-                    }
                 }
             }
         }
@@ -147,7 +146,7 @@ class CreateAccountActivity : AppCompatActivity() {
 //    }
 
     private fun verifyEmail() {
-        val mUser = mAuth!!.currentUser;
+        val mUser = mAuth!!.currentUser
         mUser!!.sendEmailVerification().addOnCompleteListener(this) { task ->
             if (task.isSuccessful) {
                 Toast.makeText(this@CreateAccountActivity,
@@ -174,7 +173,6 @@ class CreateAccountActivity : AppCompatActivity() {
 
 
     companion object {
-        private const val tag = "CreateAccountActivity"
         private const val COLLECTION_KEY = "Users"
         private const val NAME_FIELD = "Name"
         private const val USER_ID_FIELD = "ID"

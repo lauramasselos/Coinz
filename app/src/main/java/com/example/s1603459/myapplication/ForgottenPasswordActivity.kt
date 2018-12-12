@@ -13,7 +13,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 class ForgottenPasswordActivity : AppCompatActivity() {
 
-    private val TAG = "ForgotPasswordActivity"
+    private val tag = "ForgotPasswordActivity"
     //UI elements
     private var etEmail: EditText? = null
     private var btnSubmit: Button? = null
@@ -39,11 +39,11 @@ class ForgottenPasswordActivity : AppCompatActivity() {
                     .addOnCompleteListener { task ->
                         if (task.isSuccessful) {
                             val message = "Email sent."
-                            Log.d(TAG, message)
+                            Log.d(tag, message)
                             Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
                             updateToLoginUI()
                         } else {
-                            Log.w(TAG, task.exception!!.message)
+                            Log.w(tag, task.exception!!.message)
                             Toast.makeText(this, "No user found with this email.", Toast.LENGTH_SHORT).show()
                         }
                     }

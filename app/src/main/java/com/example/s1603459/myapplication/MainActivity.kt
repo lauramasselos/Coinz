@@ -33,29 +33,14 @@ import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.geojson.*
-/**/
-//import android.content.Context
-//import android.content.Intent
-//import android.os.PersistableBundle
-//import android.provider.ContactsContract
-//import android.support.design.widget.Snackbar
-//import android.view.Menu
-//import android.view.MenuItem
 import com.mapbox.mapboxsdk.annotations.IconFactory
 import com.mapbox.mapboxsdk.annotations.Marker
-import com.mapbox.mapboxsdk.camera.CameraUpdate
-import com.mapbox.mapboxsdk.style.light.Position
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONObject
 import java.text.SimpleDateFormat
-import java.time.*
-import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
-
-//import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListener, LocationEngineListener, DownloadCompleteListener  {
 
@@ -72,13 +57,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private lateinit var originLocation: Location
     private lateinit var permissionsManager: PermissionsManager
 
-    private lateinit var JSONstring: DownloadFileTask
-    private lateinit var GeoJSONFeatureCollection: FeatureCollection
+    private lateinit var jsonString: DownloadFileTask
+    private lateinit var geoJSONFeatureCollection: FeatureCollection
 
     private var locationEngine: LocationEngine? = null
     private var locationLayerPlugin: LocationLayerPlugin? = null
 
-    private var coinsCollected: ArrayList<String> = ArrayList<String>()
+    private var coinsCollected: ArrayList<String> = ArrayList()
 
     //Firebase references
     private var mDatabase: FirebaseDatabase? = null
@@ -95,8 +80,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private var email: String? = null
     private var isEmailVerified: Boolean? = null
     private var btnLogout: Button? = null
-    private var markers: HashMap<String, Marker> = HashMap<String, Marker>()
-    private var markersRemoved: HashMap<String, Marker> = HashMap<String, Marker>()
+    private var markers: HashMap<String, Marker> = HashMap()
+    private var markersRemoved: HashMap<String, Marker> = HashMap()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -140,7 +125,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     override fun onStart() {
         super.onStart()
-        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
+        getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
 //        downloadDate = settings.getString("lastDownloadDate", "")
         Log.d(tag, "[onStart] Recalled lastDownloadDate is $downloadDate")
 
@@ -161,9 +146,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             map.uiSettings.isCompassEnabled = true
             map.uiSettings.isZoomControlsEnabled = true
             enableLocation()
-            JSONstring = DownloadFileTask(this)
+            jsonString = DownloadFileTask(this)
             Log.d(tag, "todays date is $downloadDate")
-            JSONstring.execute("http://homepages.inf.ed.ac.uk/stg/coinz/$downloadDate/coinzmap.geojson")
+            jsonString.execute("http://homepages.inf.ed.ac.uk/stg/coinz/$downloadDate/coinzmap.geojson")
         }
     }
 
@@ -171,17 +156,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     override fun downloadComplete(result: String) {
         Log.d(tag, "[downloadComplete]")
         storeExchangeRates(result)
-        GeoJSONFeatureCollection = FeatureCollection.fromJson(result)
+        geoJSONFeatureCollection = FeatureCollection.fromJson(result)
         firestoreWallet?.get()?.addOnSuccessListener { wallet ->
             for (coin in wallet) {
-                if (coin.data.get(COLLECTED_BY_USER_FIELD) == "true") {
+                if (coin.data[COLLECTED_BY_USER_FIELD] == "true") {
                     coinsCollected.add(coin.id)
                 }
             }
-            dropMarkers(GeoJSONFeatureCollection)
+            dropMarkers(geoJSONFeatureCollection)
             Log.d(tag, "Collection $coinsCollected")
         }?.addOnFailureListener{
-            dropMarkers(GeoJSONFeatureCollection)
+            dropMarkers(geoJSONFeatureCollection)
             Log.d(tag, "Error getting wallet")
         }
 
@@ -212,14 +197,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         for (Feature in features!!) {
             val coordinates = (Feature.geometry() as Point).coordinates()
             val jsonObject = Feature.properties()
-            val currency = (jsonObject?.get("currency").toString()).replace("\"", "")
-            val value = (jsonObject?.get("value").toString()).replace("\"", "")
-            val id = jsonObject?.get("id").toString()
+            val currency = (jsonObject?.get(CURRENCY_FIELD).toString()).replace("\"", "")
+            val value = (jsonObject?.get(VALUE_FIELD).toString()).replace("\"", "")
+            val id = jsonObject?.get(ID_FIELD).toString()
                 val icon = IconFactory.getInstance(this)
                 val coin = icon.fromResource(R.drawable.pixelcoin)
             if (!coinsCollected.contains(id)) {
                 val marker = map.addMarker(MarkerOptions().position(LatLng(coordinates[1], coordinates[0])).title(currency).snippet(value).icon(coin))
-                markers.put(id, marker)
+                markers[id] = marker
             } else {
                 Log.d(tag, "Coin $id already collected!")
             }
@@ -284,7 +269,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             markerLocation.longitude = marker.value.position.longitude
             val distanceToMarker = location!!.distanceTo(markerLocation)
             if (distanceToMarker <= 25) {
-                markersRemoved.put(marker.key, marker.value)
+                markersRemoved[marker.key] = marker.value
             }
         }
         for (marker in markersRemoved) {
@@ -297,15 +282,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     }
 
     private fun addCoinToWallet(coinId: String) {
-        val features = GeoJSONFeatureCollection.features()
+        val features = geoJSONFeatureCollection.features()
         var currency = ""
         var value = ""
 
         for (Feature in features!!) {
             val jsonObject = Feature.properties()
-            if (jsonObject?.get("id").toString() == coinId) {
-               currency = jsonObject?.get("currency").toString()
-               value = jsonObject?.get("value").toString()
+            if (jsonObject?.get(ID_FIELD).toString() == coinId) {
+               currency = jsonObject?.get(CURRENCY_FIELD).toString()
+               value = jsonObject?.get(VALUE_FIELD).toString()
 
             }
         }
@@ -416,16 +401,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     }
 
     companion object {
-        private const val tag = "MainActivity"
         private const val COLLECTION_KEY = "Users"
         private const val SUB_COLLECTION_KEY = "Wallet"
         private const val ID_FIELD = "id"
         private const val VALUE_FIELD = "value"
         private const val CURRENCY_FIELD = "currency"
-        private const val DATE_FIELD = "dateCollected"
-        private const val IS_BANKED_FIELD = "banked"
         private const val COLLECTED_BY_USER_FIELD = "collectedByUser"
-        private const val TRANSFER_FIELD = "transferred"
     }
 
 

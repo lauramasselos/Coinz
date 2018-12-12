@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.s1603459.myapplication
 
 import android.app.ProgressDialog
@@ -6,20 +8,16 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.*
 import android.view.View
-import kotlinx.android.synthetic.main.activity_login.*
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import android.text.TextUtils
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
 
 class LoginActivity : AppCompatActivity() {
 
-    private val TAG = "LoginActivity"
+    private val tag = "LoginActivity"
     //global variables
     private var email: String? = null
     private var password: String? = null
@@ -38,7 +36,7 @@ class LoginActivity : AppCompatActivity() {
         setContentView(R.layout.activity_login)
         initialise()
         val user = mAuth!!.currentUser
-        Log.d(TAG, "[onCreate] ${user.toString()}")
+        Log.d(tag, "[onCreate] ${user.toString()}")
         if (user != null) {
             mProgressBar!!.setMessage("Logging you in...")
             mProgressBar!!.show()
@@ -68,17 +66,17 @@ class LoginActivity : AppCompatActivity() {
         if (!TextUtils.isEmpty(email) && !TextUtils.isEmpty(password)) {
             mProgressBar!!.setMessage("Logging in...")
             mProgressBar!!.show()
-            Log.d(TAG, "Logging in user.")
+            Log.d(tag, "Logging in user.")
             mAuth!!.signInWithEmailAndPassword(email!!, password!!)
                     .addOnCompleteListener(this) { task ->
                         mProgressBar!!.hide()
                         if (task.isSuccessful) {
                             // Sign in success, update UI with signed-in user's information
-                            Log.d(TAG, "signInWithEmail:success")
+                            Log.d(tag, "signInWithEmail:success")
                             updateUI()
                         } else {
                             // If sign in fails, display a message to the user.
-                            Log.e(TAG, "signInWithEmail:failure", task.exception)
+                            Log.e(tag, "signInWithEmail:failure", task.exception)
                             Toast.makeText(this@LoginActivity, "Authentication failed.",
                                     Toast.LENGTH_SHORT).show()
                         }

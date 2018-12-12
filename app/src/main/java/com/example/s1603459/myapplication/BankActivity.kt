@@ -1,5 +1,6 @@
 package com.example.s1603459.myapplication
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
@@ -16,7 +17,6 @@ import kotlinx.android.synthetic.main.activity_main.*
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 import android.widget.EditText
 
 
@@ -24,6 +24,7 @@ import android.widget.EditText
 class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
     private var todaysDate = "" // YYYY/MM/DD
+    private val tag = "BankActivity"
 
     private var shilText: TextView? = null
     private var dolrText: TextView? = null
@@ -32,18 +33,12 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
     private var btnBank: Button? = null
     private var btnTransfer: Button? = null
-
-    private var wallet: HashMap<String, String> = HashMap<String, String>()
     private var walletOfCoins: ArrayList<Coin> = ArrayList()
-    private var walletCopy: HashMap<String, String> = HashMap<String, String>()
-
-    private lateinit var name: String
-    private lateinit var email: String
-    private lateinit var spinner: Spinner
-    private lateinit var coin: String
-    private lateinit var uniqueCoinId: String
 
     private var coinsBankedTodayUserCollected: Int = 0
+
+    private lateinit var email: String
+    private lateinit var spinner: Spinner
 
     private var mAuth: FirebaseAuth? = null
     private var user: FirebaseUser? = null
@@ -54,6 +49,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     private var firestoreBanked: CollectionReference? = null
     private var firestoreUsers: CollectionReference? = null
 
+    @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_bank)
@@ -98,34 +94,34 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 coinsBankedTodayUserCollected = 0
                 val coinSelected = spinner.selectedItem as Coin
                 for (coin in firebaseWallet) {
-                     if (coin.data.get(DATE_BANKED_FIELD) == todaysDate && coin.data.get(COLLECTED_BY_USER_FIELD) == "true" && coin.data.get(IS_BANKED_FIELD) == "true") {
+                     if (coin.data[DATE_BANKED_FIELD] == todaysDate && coin.data[COLLECTED_BY_USER_FIELD] == "true" && coin.data[IS_BANKED_FIELD] == "true") {
                       coinsBankedTodayUserCollected++
                     }
                 }
-                if (coinSelected.collectedByUser == "false") {
-                    Toast.makeText(this, "You cannot transfer this coin, it's been sent to you!", Toast.LENGTH_SHORT).show()
-                } else if (coinsBankedTodayUserCollected < 25) {
-                    Toast.makeText(this, "You can't send spare change until you bank 25 coins today!", Toast.LENGTH_SHORT).show()
-                } else {
-                    val builder = AlertDialog.Builder(this)
+                when {
+                    coinSelected.collectedByUser == "false" -> Toast.makeText(this, "You cannot transfer this coin, it's been sent to you!", Toast.LENGTH_SHORT).show()
+                    coinsBankedTodayUserCollected < 25 -> Toast.makeText(this, "You can't send spare change until you bank 25 coins today!", Toast.LENGTH_SHORT).show()
+                    else -> {
+                        val builder = AlertDialog.Builder(this)
 
-                    builder.setTitle("Transfer Coin")
-                    builder.setMessage("Enter email of user you wish to transfer your coin to.")
+                        builder.setTitle("Transfer Coin")
+                        builder.setMessage("Enter email of user you wish to transfer your coin to.")
 
-                    // Set an EditText view to get user input
-                    val input = EditText(this)
-                    builder.setView(input)
+                        // Set an EditText view to get user input
+                        val input = EditText(this)
+                        builder.setView(input)
 
-                    builder.setPositiveButton("OK") { dialog, which ->
-                        doesUserExist(input.text.toString())
-                        Log.d(tag, "[btnTransfer] setPositiveButton email ${input.text}")
+                        builder.setPositiveButton("OK") { _, _ ->
+                            doesUserExist(input.text.toString())
+                            Log.d(tag, "[btnTransfer] setPositiveButton email ${input.text}")
+                        }
+
+                        builder.setNegativeButton("Cancel") { _, _ ->
+                            // Canceled.
+                        }
+
+                        builder.show()
                     }
-
-                    builder.setNegativeButton("Cancel") { dialog, which ->
-                        // Canceled.
-                    }
-
-                    builder.show()
                 }
 
             }
@@ -143,14 +139,14 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             // Display a message on alert dialog
             builder.setMessage("Are you want to bank this coin?")
             // Set a positive button and its click listener on alert dialog
-            builder.setPositiveButton("Yes"){dialog, which ->
+            builder.setPositiveButton("Yes"){_, _ ->
                 // Do something when user press the positive button
                 fetchCoin()
                 Log.d(tag, "[initialise] btnBank")
 
             }
             // Display a negative button on alert dialog
-            builder.setNegativeButton("No"){dialog,which ->
+            builder.setNegativeButton("No"){ _, _ ->
             }
 
             // Display a neutral button on alert dialog
@@ -171,7 +167,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
 
     private fun getExchangeRate(currency: String){
-        var exchangeRate = 0.0
+        var exchangeRate: Double
         firestoreExchangeRates!!.get().addOnSuccessListener { rates ->
             Log.d(tag, "Exchange rate for $currency is ${rates.get(currency)}")
             exchangeRate = rates.get(currency) as Double
@@ -195,12 +191,12 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             firestoreWallet?.get()?.addOnSuccessListener { firebaseWallet ->
                 for (coin in firebaseWallet) {
                     val id = coin.id
-                    val banked = coin.data.get(IS_BANKED_FIELD).toString().replace("\"", "")
-                    val collectedByUser = coin.data.get(COLLECTED_BY_USER_FIELD).toString().replace("\"", "")
-                    val currency = coin.data.get(CURRENCY_FIELD).toString().replace("\"", "")
-                    val date = coin.data.get(DATE_FIELD).toString().replace("\"", "")
-                    val value = coin.data.get(VALUE_FIELD).toString().replace("\"", "")
-                    val transferred = coin.data.get(TRANSFER_FIELD).toString().replace("\"", "")
+                    val banked = coin.data[IS_BANKED_FIELD].toString().replace("\"", "")
+                    val collectedByUser = coin.data[COLLECTED_BY_USER_FIELD].toString().replace("\"", "")
+                    val currency = coin.data[CURRENCY_FIELD].toString().replace("\"", "")
+                    val date = coin.data[DATE_FIELD].toString().replace("\"", "")
+                    val value = coin.data[VALUE_FIELD].toString().replace("\"", "")
+                    val transferred = coin.data[TRANSFER_FIELD].toString().replace("\"", "")
                     val newCoin = Coin(id, banked, collectedByUser, currency, date, value, transferred)
                     if (banked == "false" && ((transferred == "true" && collectedByUser == "false") || (transferred == "false" && collectedByUser == "true"))){
                         Log.d(tag, "[getCoinIds] inside if statement")
@@ -236,7 +232,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             coinsBankedTodayUserCollected = 0
             val coinSelected = spinner.selectedItem as Coin
             for (coin in firebaseWallet) {
-                if (coin.data.get(DATE_BANKED_FIELD) == todaysDate && coin.data.get(COLLECTED_BY_USER_FIELD) == "true" && coin.data.get(IS_BANKED_FIELD) == "true") {
+                if (coin.data[DATE_BANKED_FIELD] == todaysDate && coin.data[COLLECTED_BY_USER_FIELD] == "true" && coin.data[IS_BANKED_FIELD] == "true") {
                     coinsBankedTodayUserCollected++
                 }
             }
@@ -262,8 +258,8 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         firestoreUsers?.get()?.addOnSuccessListener { firestoreUsers ->
             var userExists = false
             for (user in firestoreUsers) {
-                if (user.data.get("Email") == input) {
-                    Log.d(tag, "[doesUserExist] ${user.data.get("Email") == input}")
+                if (user.data["Email"] == input) {
+                    Log.d(tag, "[doesUserExist] ${user.data["Email"] == input}")
                     userExists = true
                 }
             }
@@ -280,9 +276,8 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     }
 
     private fun transferTo(friendEmail: String) {
-        firestoreWallet?.get()?.addOnSuccessListener { firebaseWallet ->
-
-                val coinSelected = spinner.selectedItem as Coin
+        firestoreWallet?.get()?.addOnSuccessListener {
+            val coinSelected = spinner.selectedItem as Coin
                 coinSelected.collectedByUser = "false"
                 coinSelected.transferred = "true"
                 Log.d(tag, "Coin is $coinSelected")
@@ -357,7 +352,6 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     }
 
     override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-            val coin = parent?.selectedItem as Coin
             //displayCoinInformation(coin)
     }
 
@@ -382,7 +376,6 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     }
 
 companion object {
-    private const val tag = "BankActivity"
     private const val COLLECTION_KEY = "Users"
     private const val SUB_COLLECTION_KEY = "Wallet"
     private const val ID_FIELD = "id"
