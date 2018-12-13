@@ -69,7 +69,16 @@ class ProfileActivity : AppCompatActivity() {
                 goldTotal += coin.data["GOLD"] as Double
             }
             Log.d(tag, "[getGold] Gold total $goldTotal")
-            usersGold!!.text = "GOLD: $goldTotal"
+            usersGold!!.text = "GOLD: $goldTotal, rounded to ${goldTotal.toInt()}"
+            setLevel(goldTotal.toInt())
+        }
+    }
+
+    private fun setLevel(gold: Int) {
+        val level = gold % 50000
+        val newLevel = mapOf("Level" to level)
+        firestoreUsers!!.document(mUserEmail).update(newLevel).addOnCompleteListener {
+            Log.d(tag, "User $mUserEmail's level successfully updated to level $level")
         }
     }
 

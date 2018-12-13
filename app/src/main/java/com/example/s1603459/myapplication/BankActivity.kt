@@ -258,8 +258,8 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         firestoreUsers?.get()?.addOnSuccessListener { firestoreUsers ->
             var userExists = false
             for (user in firestoreUsers) {
-                if (user.data["Email"] == input) {
-                    Log.d(tag, "[doesUserExist] ${user.data["Email"] == input}")
+                if (user.data["email"] == input) {
+                    Log.d(tag, "[doesUserExist] ${user.data["email"] == input}")
                     userExists = true
                 }
             }

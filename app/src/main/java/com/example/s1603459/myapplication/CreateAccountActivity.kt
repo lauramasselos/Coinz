@@ -90,7 +90,7 @@ class CreateAccountActivity : AppCompatActivity() {
                     updateUserInfoAndUI()
 
                     val name = "$firstName $lastName"
-                    writeNewUser(user.uid, name, user.email)
+                    writeNewUser(user.uid, name, user.email!!)
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(tag, "createUserWithEmail:failure", task.exception)
@@ -105,16 +105,14 @@ class CreateAccountActivity : AppCompatActivity() {
 
     }
 
-    private fun writeNewUser(userId: String, name: String?, email: String?) {
-        val user = User(name, email)
+    private fun writeNewUser(userId: String, name: String, email: String) {
+        val user = User(userId, name, email, 0)
         mDatabaseReference.child("users").child(userId).setValue(user)
         mDatabaseReference.child("users").child(userId).child("name").setValue(name)
 
         // create a message of the form { ”Name”: str1, ”Text”: str2 }
-        val newUser = mapOf(
-                NAME_FIELD to name.toString(),
-                USER_ID_FIELD to userId,
-                EMAIL_FIELD to email.toString())
+        val newUser = User(userId, name, email, 0)
+
 // send the message and listen for success or failure
         firestoreUsers?.set(newUser)?.addOnSuccessListener{
             Log.d(tag, "User added to database")}
@@ -134,16 +132,6 @@ class CreateAccountActivity : AppCompatActivity() {
         }
     }
 
-
-
-
-//    private fun getUsernameFromEmail(email: String?) : String {
-//        return if (email!!.contains("@")) {
-//            email.split("@".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0]
-//        } else {
-//            email
-//        }
-//    }
 
     private fun verifyEmail() {
         val mUser = mAuth!!.currentUser
@@ -174,9 +162,10 @@ class CreateAccountActivity : AppCompatActivity() {
 
     companion object {
         private const val COLLECTION_KEY = "Users"
-        private const val NAME_FIELD = "Name"
-        private const val USER_ID_FIELD = "ID"
-        private const val EMAIL_FIELD = "Email"
+        private const val NAME_FIELD = "name"
+        private const val USER_ID_FIELD = "userId"
+        private const val EMAIL_FIELD = "email"
+        private const val LEVEL_FIELD = "level"
     }
 
 }

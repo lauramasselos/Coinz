@@ -60,6 +60,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private lateinit var jsonString: DownloadFileTask
     private lateinit var geoJSONFeatureCollection: FeatureCollection
 
+    private lateinit var mDatabaseReference: DatabaseReference
+
     private var locationEngine: LocationEngine? = null
     private var locationLayerPlugin: LocationLayerPlugin? = null
 
@@ -70,6 +72,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private var mAuth: FirebaseAuth? = null
     private var user: FirebaseUser? = null
     private var firestore: FirebaseFirestore? = null
+    private var firestoreUsers: CollectionReference? = null
+    private var firestoreUser: DocumentReference? = null
     private var firestoreWallet: CollectionReference? = null
     private var firestoreExchangeRates: DocumentReference? = null
 
@@ -103,19 +107,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     private fun initialise() {
         mDatabase = FirebaseDatabase.getInstance()
+        mDatabaseReference = mDatabase!!.reference.child("Users")
+        Log.d(tag, "[initialise] mDatabase $mDatabase")
         mAuth = FirebaseAuth.getInstance()
         user = mAuth!!.currentUser
-        name = user?.displayName
-        email = user?.email
+        name = user!!.displayName
+        email = user!!.email
         isEmailVerified = user?.isEmailVerified
         btnLogout = findViewById<View>(R.id.signOutBtn) as Button
         btnLogout!!.setOnClickListener { signOut() }
         firestore = FirebaseFirestore.getInstance()
         val settings = FirebaseFirestoreSettings.Builder().setTimestampsInSnapshotsEnabled(true).build()
         firestore?.firestoreSettings = settings
+        firestoreUser = firestore?.collection(COLLECTION_KEY)?.document(email!!)
         firestoreWallet = firestore?.collection(COLLECTION_KEY)?.document(email!!)?.collection(SUB_COLLECTION_KEY) // path Users/<user>/Wallet
         firestoreExchangeRates = firestore?.collection("Exchange Rates")?.document("Today's Exchange Rate")
-//        realtimeUpdateListener()
+        firestoreUsers = firestore?.collection("Users")
     }
 
     private fun signOut() {
@@ -126,7 +133,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     override fun onStart() {
         super.onStart()
         getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
-//        downloadDate = settings.getString("lastDownloadDate", "")
         Log.d(tag, "[onStart] Recalled lastDownloadDate is $downloadDate")
 
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
@@ -263,20 +269,30 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             originLocation = location
             setCameraPosition(location)
         }
-        for (marker in markers) {
-            val markerLocation = Location("")
-            markerLocation.latitude = marker.value.position.latitude
-            markerLocation.longitude = marker.value.position.longitude
-            val distanceToMarker = location!!.distanceTo(markerLocation)
-            if (distanceToMarker <= 25) {
-                markersRemoved[marker.key] = marker.value
+
+        removeMarkers(markers, location)
+    }
+
+    private fun removeMarkers(markersMap: HashMap<String, Marker>, location: Location?) {
+        firestoreUsers!!.document(email!!).get().addOnSuccessListener { userInfo ->
+            val level = (userInfo.get("level") as Long).toInt()
+
+            for (marker in markersMap) {
+                val markerLocation = Location("")
+                markerLocation.latitude = marker.value.position.latitude
+                markerLocation.longitude = marker.value.position.longitude
+                val distanceToMarker = location!!.distanceTo(markerLocation)
+                Log.d(tag, "[onLocationChanged] ${mDatabaseReference.child("level")}")
+                if (distanceToMarker <= 25 + level) {
+                    markersRemoved[marker.key] = marker.value
+                }
             }
-        }
-        for (marker in markersRemoved) {
-            if (markers.containsKey(marker.key)) {
-                marker.value.remove()
-                markers.remove(marker.key)
-                addCoinToWallet(marker.key)
+            for (marker in markersRemoved) {
+                if (markersMap.containsKey(marker.key)) {
+                    marker.value.remove()
+                    markersMap.remove(marker.key)
+                    addCoinToWallet(marker.key)
+                }
             }
         }
     }
