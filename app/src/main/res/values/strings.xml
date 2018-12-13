@@ -29,4 +29,12 @@
     <string name="login_title">Login</string>
     <string name="create_act">Create Account</string>
     <string name="send_email_to_reset_password">Send email to reset password</string>
+    <string name="transfer">Transfer</string>
+    <string name="bank">Bank</string>
+    <string name="peny">PENY:</string>
+    <string name="quid">QUID:</string>
+    <string name="dolr">DOLR:</string>
+    <string name="shil">SHIL:</string>
+    <string name="todays_rates_are">Today\'s rates are:</string>
+    <string name="welcome_to_coinz_bank">Welcome to Coinz Bank</string>
 </resources>

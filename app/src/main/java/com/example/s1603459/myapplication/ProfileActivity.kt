@@ -5,27 +5,34 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
 import android.util.Log
+import android.view.View
 import android.widget.Button
+import android.widget.TextView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_profile.*
+import org.w3c.dom.Text
 
 class ProfileActivity : AppCompatActivity() {
 
     private val tag = "ProfileActivity"
-    private var addFriendBtn: Button? = null
     private var mAuth: FirebaseAuth? = null
     private var user: FirebaseUser? = null
     private var firestore: FirebaseFirestore? = null
     private var mDatabase: FirebaseDatabase? = null
     private var firestoreUsers: CollectionReference? = null
+    private var firestoreBanked: CollectionReference? = null
+    private var userName: TextView? = null
+    private var usersEmail: TextView? = null
+    private var usersGold: TextView? = null
 
     private var coinzUsers: ArrayList<String> = ArrayList()
-    private lateinit var userEmail: String
+    private lateinit var mUserEmail: String
+    private lateinit var mUserName: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,32 +45,49 @@ class ProfileActivity : AppCompatActivity() {
         mDatabase = FirebaseDatabase.getInstance()
         mAuth = FirebaseAuth.getInstance()
         user = mAuth!!.currentUser
-        userEmail = user!!.email!!
+        mUserEmail = user!!.email!!
+        mUserName = user!!.displayName!!
         firestore = FirebaseFirestore.getInstance()
         val settings = FirebaseFirestoreSettings.Builder().setTimestampsInSnapshotsEnabled(true).build()
         firestore?.firestoreSettings = settings
         firestoreUsers = firestore?.collection("Users")
-        addFriendBtn = findViewById(R.id.addFriendBtn)
-        addFriendBtn!!.setOnClickListener{ searchUsers() }
+        firestoreBanked = firestore?.collection("Users")?.document(mUserEmail)?.collection("Banked")
+        userName = findViewById<View>(R.id.userText) as TextView
+        usersEmail = findViewById<View>(R.id.userEmailText) as TextView
+        usersGold = findViewById<View>(R.id.goldText) as TextView
 
+        userName!!.text = mUserName
+        usersEmail!!.text = mUserEmail
+        getGold()
 
     }
 
-    private fun searchUsers() {
-        firestoreUsers?.get()?.addOnSuccessListener {users ->
-            for (user in users) {
-                coinzUsers.add(user.toString())
-                Log.d(tag, "[onCreate] $user")
+    private fun getGold() {
+        firestoreBanked!!.get().addOnSuccessListener { firebaseGold ->
+            var goldTotal = 0.0
+            for (coin in firebaseGold) {
+                goldTotal += coin.data["GOLD"] as Double
             }
-            // all users' emails in a list
-            // probably better to add friends in another activity; have a button that passes an intent to start AddFriendActivity
-
-
-
-
-
+            Log.d(tag, "[getGold] Gold total $goldTotal")
+            usersGold!!.text = "GOLD: $goldTotal"
         }
     }
+
+//    private fun searchUsers() {
+//        firestoreUsers?.get()?.addOnSuccessListener {users ->
+//            for (user in users) {
+//                coinzUsers.add(user.toString())
+//                Log.d(tag, "[onCreate] $user")
+//            }
+//            // all users' emails in a list
+//            // probably better to add friends in another activity; have a button that passes an intent to start AddFriendActivity
+//
+//
+//
+//
+//
+//        }
+//    }
 
 
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
@@ -83,8 +107,5 @@ class ProfileActivity : AppCompatActivity() {
         }
         false
     }
-//    Menu menu = navigation.getMenu();
-//    MenuItem menuItem = menu.getItem(INSERT_INDEX_HERE);
-//    menuItem.setChecked(true);
 
 }
