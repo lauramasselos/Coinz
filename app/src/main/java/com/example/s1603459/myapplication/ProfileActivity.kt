@@ -46,17 +46,17 @@ class ProfileActivity : AppCompatActivity() {
         mAuth = FirebaseAuth.getInstance()
         user = mAuth!!.currentUser
         mUserEmail = user!!.email!!
-        mUserName = user!!.displayName!!
+//        mUserName = user?.displayName!!
         firestore = FirebaseFirestore.getInstance()
         val settings = FirebaseFirestoreSettings.Builder().setTimestampsInSnapshotsEnabled(true).build()
         firestore?.firestoreSettings = settings
         firestoreUsers = firestore?.collection("Users")
         firestoreBanked = firestore?.collection("Users")?.document(mUserEmail)?.collection("Banked")
-        userName = findViewById<View>(R.id.userText) as TextView
+//        userName = findViewById<View>(R.id.userText) as TextView
         usersEmail = findViewById<View>(R.id.userEmailText) as TextView
         usersGold = findViewById<View>(R.id.goldText) as TextView
 
-        userName!!.text = mUserName
+//        userName!!.text = mUserName
         usersEmail!!.text = mUserEmail
         getGold()
 
@@ -69,7 +69,7 @@ class ProfileActivity : AppCompatActivity() {
                 goldTotal += coin.data["GOLD"] as Double
             }
             Log.d(tag, "[getGold] Gold total $goldTotal")
-            usersGold!!.text = "GOLD: $goldTotal, rounded to ${goldTotal.toInt()}"
+            usersGold!!.text = "GOLD: $goldTotal"
             setLevel(goldTotal.toInt())
         }
     }
