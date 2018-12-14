@@ -13,7 +13,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar">
-        <activity android:name=".MainActivity" />
         <activity android:name=".LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,8 +22,7 @@
         </activity>
         <activity android:name=".CreateAccountActivity" />
         <activity android:name=".ForgottenPasswordActivity" />
-        <activity android:name=".ProfileActivity" />
-        <activity android:name=".BankActivity" />
+        <activity android:name=".NavigationActivity" />
     </application>
 
 </manifest>

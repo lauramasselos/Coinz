@@ -1,51 +1,81 @@
 package com.example.s1603459.myapplication
 
 import android.content.Context
+import android.net.Uri
+import android.os.Bundle
+import android.support.v4.app.Fragment
 import android.content.Intent
 import android.location.Location
-import android.os.Bundle
-import android.support.design.widget.NavigationView
-import android.support.v4.widget.DrawerLayout
-import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.Toast
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
 import com.mapbox.android.core.location.LocationEnginePriority
 import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.android.core.permissions.PermissionsListener
 import com.mapbox.android.core.permissions.PermissionsManager
-import android.widget.*
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.database.*
-import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.mapbox.geojson.FeatureCollection
+import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.annotations.IconFactory
+import com.mapbox.mapboxsdk.annotations.Marker
 import com.mapbox.mapboxsdk.annotations.MarkerOptions
-import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
+import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.location.modes.CameraMode
 import com.mapbox.mapboxsdk.location.modes.RenderMode
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
-import com.mapbox.geojson.*
-import com.mapbox.mapboxsdk.annotations.IconFactory
-import com.mapbox.mapboxsdk.annotations.Marker
+import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-
-class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListener, LocationEngineListener, DownloadCompleteListener  {
 
 
-    private val tag = "MainActivity"
+// TODO: Rename parameter arguments, choose names that match
+// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+private const val ARG_PARAM1 = "param1"
+private const val ARG_PARAM2 = "param2"
+
+/**
+ * A simple [Fragment] subclass.
+ * Activities that contain this fragment must implement the
+ * [MapFragment.OnFragmentInteractionListener] interface
+ * to handle interaction events.
+ * Use the [MapFragment.newInstance] factory method to
+ * create an instance of this fragment.
+ *
+ */
+class MapFragment : Fragment(), OnMapReadyCallback, PermissionsListener, LocationEngineListener, DownloadCompleteListener  {
+    // TODO: Rename and change types of parameters
+    private var param1: String? = null
+    private var param2: String? = null
+    private var listener: OnFragmentInteractionListener? = null
+
+
+    // copy
+
+//    private val tag = "MainActivity"
+
+    private val COLLECTION_KEY = "Users"
+    private val SUB_COLLECTION_KEY = "Wallet"
+    private val ID_FIELD = "id"
+    private val VALUE_FIELD = "value"
+    private val CURRENCY_FIELD = "currency"
+    private val COLLECTED_BY_USER_FIELD = "collectedByUser"
 
     private var downloadDate = "" // YYYY/MM/DD
 
@@ -87,21 +117,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private var markers: HashMap<String, Marker> = HashMap()
     private var markersRemoved: HashMap<String, Marker> = HashMap()
 
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         Log.d(tag, "[onCreate] method")
-        setContentView(R.layout.activity_main)
+//        setContentView(R.layout.activity_main)
         initialise()
 //        setSupportActionBar(toolbar)
         downloadDate = SimpleDateFormat("YYYY/MM/dd").format(Date())
 
-        Mapbox.getInstance(applicationContext, getString(R.string.access_token))
-        mapView = findViewById(R.id.mapView)
+        Mapbox.getInstance(this.requireContext(), getString(R.string.access_token))
+        mapView = view.findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
     }
-
 
     private fun initialise() {
         mDatabase = FirebaseDatabase.getInstance()
@@ -112,7 +140,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         name = user!!.displayName
         email = user!!.email
         isEmailVerified = user?.isEmailVerified
-        btnLogout = findViewById<View>(R.id.signOutBtn) as Button
+        btnLogout = view?.findViewById<View>(R.id.signOutBtn) as Button
         btnLogout!!.setOnClickListener { signOut() }
         firestore = FirebaseFirestore.getInstance()
         val settings = FirebaseFirestoreSettings.Builder().setTimestampsInSnapshotsEnabled(true).build()
@@ -125,15 +153,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     private fun signOut() {
         mAuth!!.signOut()
-        startActivity(Intent(this, LoginActivity::class.java))
+        startActivity(Intent(this.activity, LoginActivity::class.java))                    //TODO Make sure to remove all remnants of signing out in fragment
     }
 
     override fun onStart() {
         super.onStart()
-        getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
         Log.d(tag, "[onStart] Recalled lastDownloadDate is $downloadDate")
 
-        if (PermissionsManager.areLocationPermissionsGranted(this)) {
+        if (PermissionsManager.areLocationPermissionsGranted(this.context)) {
             locationEngine?.requestLocationUpdates()
             locationLayerPlugin?.onStart()
         }
@@ -178,6 +205,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
 
     private fun storeExchangeRates(result: String) {
+        Log.d(tag, "[storeExchangeRates] $result")
         val jsonObject = JSONObject(result)
         val jsonRates = jsonObject.getJSONObject("rates")
 
@@ -188,15 +216,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                 "PENY" to jsonRates.get("PENY")
         )
 
-       firestoreExchangeRates?.set(newER)?.addOnSuccessListener {
-           Log.d(tag, "Exchange rates updated for $downloadDate on Firebase")
-       }?.addOnFailureListener{
-           Log.d(tag, "Failed to set exchange rates for $downloadDate")
-       }
+        firestoreExchangeRates?.set(newER)?.addOnSuccessListener {
+            Log.d(tag, "Exchange rates updated for $downloadDate on Firebase")
+        }?.addOnFailureListener{
+            Log.d(tag, "Failed to set exchange rates for $downloadDate")
+        }
     }
 
 
-    private fun dropMarkers(GeoJSONFeatureCollection:FeatureCollection) {
+    private fun dropMarkers(GeoJSONFeatureCollection: FeatureCollection) {
         val features = GeoJSONFeatureCollection.features()
         for (Feature in features!!) {
             val coordinates = (Feature.geometry() as Point).coordinates()
@@ -204,8 +232,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             val currency = (jsonObject?.get(CURRENCY_FIELD).toString()).replace("\"", "")
             val value = (jsonObject?.get(VALUE_FIELD).toString()).replace("\"", "")
             val id = jsonObject?.get(ID_FIELD).toString()
-                val icon = IconFactory.getInstance(this)
-                val coin = icon.fromResource(R.drawable.pixelcoin)
+            val icon = IconFactory.getInstance(this.requireContext())
+            val coin = icon.fromResource(R.drawable.pixelcoin)
             if (!coinsCollected.contains(id)) {
                 val marker = map.addMarker(MarkerOptions().position(LatLng(coordinates[1], coordinates[0])).title(currency).snippet(value).icon(coin))
                 markers[id] = marker
@@ -216,21 +244,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     }
 
     private fun enableLocation() {
-        if (PermissionsManager.areLocationPermissionsGranted(this)) {
+        if (PermissionsManager.areLocationPermissionsGranted(this.context)) {
             Log.d(tag, "Permissions are granted")
             initialiseLocationEngine()
             initialiseLocationLayer()
         } else {
             Log.d(tag, "Permissions are not granted")
             permissionsManager = PermissionsManager(this)
-            permissionsManager.requestLocationPermissions(this)
+            permissionsManager.requestLocationPermissions(this.activity)
         }
     }
 
     @SuppressWarnings("MissingPermission")
     private fun initialiseLocationEngine() {
         Log.d(tag, "[initialiseLocationEngine] method")
-        locationEngine = LocationEngineProvider(this).obtainBestLocationEngineAvailable()
+        locationEngine = LocationEngineProvider(this.context).obtainBestLocationEngineAvailable()
         locationEngine?.apply {
             interval = 5000
             fastestInterval = 1000
@@ -304,8 +332,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         for (Feature in features!!) {
             val jsonObject = Feature.properties()
             if (jsonObject?.get(ID_FIELD).toString() == coinId) {
-               currency = jsonObject?.get(CURRENCY_FIELD).toString()
-               value = jsonObject?.get(VALUE_FIELD).toString()
+                currency = jsonObject?.get(CURRENCY_FIELD).toString()
+                value = jsonObject?.get(VALUE_FIELD).toString()
 
             }
         }
@@ -315,9 +343,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
 
         firestoreWallet?.document(coinId)?.set(newCoin)?.addOnSuccessListener {
-            Toast.makeText(this, "Coin added to wallet", Toast.LENGTH_SHORT).show()}
+            Toast.makeText(this.context, "Coin added to wallet", Toast.LENGTH_SHORT).show()}
                 ?.addOnFailureListener{
-                   Log.d(tag, "Failed to add coin to wallet")
+                    Log.d(tag, "Failed to add coin to wallet")
                 }
 
 
@@ -334,7 +362,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) { // override
         Log.d(tag, "[onExplanationNeeded] Permissions: $permissionsToExplain")
         // Present popup message or dialog
-        Toast.makeText(this, "Permission needed to access location for gameplay.", Toast.LENGTH_LONG).show()
+        Toast.makeText(this.context, "Permission needed to access location for gameplay.", Toast.LENGTH_LONG).show()
     }
 
     override fun onPermissionResult(granted: Boolean) { // override
@@ -370,10 +398,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         locationLayerPlugin?.onStop()
         mapView.onStop()
         Log.d(tag, "[onStop] Storing lastDownloadDate of $downloadDate")
-        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
-        val editor = settings.edit()
-        editor.putString("lastDownloadDate", downloadDate)
-        editor.apply()
+//        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
+//        val editor = settings.edit()
+//        editor.putString("lastDownloadDate", downloadDate)
+//        editor.apply()
     }
 
     override fun onDestroy() {
@@ -389,22 +417,84 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         mapView.onLowMemory()
     }
 
-    override fun onSaveInstanceState(outState: Bundle?) {
-        Log.d(tag, "[onSaveInstanceState] method")
-        super.onSaveInstanceState(outState)
-        if (outState != null) {
-            mapView.onSaveInstanceState(outState)
+//    override fun onSaveInstanceState(outState: Bundle?) {
+//        Log.d(tag, "[onSaveInstanceState] method")
+//        super.onSaveInstanceState(outState)
+//        super.onSaveInstanceState(outState)
+//        if (outState != null) {
+//            mapView.onSaveInstanceState(outState)
+//        }
+//    }
+
+
+    // end copy
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        arguments?.let {
+            param1 = it.getString(ARG_PARAM1)
+            param2 = it.getString(ARG_PARAM2)
         }
     }
 
-    companion object {
-        private const val COLLECTION_KEY = "Users"
-        private const val SUB_COLLECTION_KEY = "Wallet"
-        private const val ID_FIELD = "id"
-        private const val VALUE_FIELD = "value"
-        private const val CURRENCY_FIELD = "currency"
-        private const val COLLECTED_BY_USER_FIELD = "collectedByUser"
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+                              savedInstanceState: Bundle?): View? {
+        // Inflate the layout for this fragment
+        return inflater.inflate(R.layout.fragment_map, container, false)
     }
 
+    // TODO: Rename method, update argument and hook method into UI event
+    fun onButtonPressed(uri: Uri) {
+        listener?.onFragmentInteraction(uri)
+    }
 
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is OnFragmentInteractionListener) {
+            listener = context
+        } else {
+            throw RuntimeException(context.toString() + " must implement OnFragmentInteractionListener")
+        }
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        listener = null
+    }
+
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     *
+     *
+     * See the Android Training lesson [Communicating with Other Fragments]
+     * (http://developer.android.com/training/basics/fragments/communicating.html)
+     * for more information.
+     */
+    interface OnFragmentInteractionListener {
+        // TODO: Update argument type and name
+        fun onFragmentInteraction(uri: Uri)
+    }
+
+    companion object {
+        /**
+         * Use this factory method to create a new instance of
+         * this fragment using the provided parameters.
+         *
+         * @param param1 Parameter 1.
+         * @param param2 Parameter 2.
+         * @return A new instance of fragment MapFragment.
+         */
+        // TODO: Rename and change types and number of parameters
+        @JvmStatic
+        fun newInstance(param1: String, param2: String) =
+                MapFragment().apply {
+                    arguments = Bundle().apply {
+                        putString(ARG_PARAM1, param1)
+                        putString(ARG_PARAM2, param2)
+                    }
+                }
+    }
 }

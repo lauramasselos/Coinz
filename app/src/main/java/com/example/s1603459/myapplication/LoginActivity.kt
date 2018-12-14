@@ -40,7 +40,7 @@ class LoginActivity : AppCompatActivity() {
         if (user != null) {
             mProgressBar!!.setMessage("Logging you in...")
             mProgressBar!!.show()
-            startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+            startActivity(Intent(this@LoginActivity, NavigationActivity::class.java))
         }
     }
     private fun initialise() {
@@ -87,7 +87,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun updateUI() {
-        val intent = Intent(this@LoginActivity, MainActivity::class.java)
+        val intent = Intent(this@LoginActivity, NavigationActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         startActivity(intent)
     }
