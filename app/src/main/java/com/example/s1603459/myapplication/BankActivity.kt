@@ -55,8 +55,6 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         setContentView(R.layout.activity_bank)
         todaysDate = SimpleDateFormat("YYYY/MM/dd").format(Date())
         initialise()
-        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
-
     }
 
     //    @SuppressLint("SetTextI18n")
@@ -281,6 +279,9 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 coinSelected.collectedByUser = "false"
                 coinSelected.transferred = "true"
                 Log.d(tag, "Coin is $coinSelected")
+            val id = coinSelected.id
+            val transferId = "${coinSelected.id}TRANSFER"
+            coinSelected.id = transferId
 
 
                 firestoreUsers!!.document(friendEmail).collection(SUB_COLLECTION_KEY).document(coinSelected.id).set(coinSelected).addOnSuccessListener {
@@ -289,6 +290,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                     Log.d(tag, "[transferTo] Error adding coin to $friendEmail wallet")
                 }
 
+                coinSelected.id = id
                 coinSelected.collectedByUser = "true"
 
                 firestoreWallet?.document(coinSelected.id)?.set(coinSelected)?.addOnSuccessListener {
@@ -316,8 +318,8 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                     COLLECTED_BY_USER_FIELD to coin.collectedByUser
 
             )
-
-            firestoreBanked?.document(coin.id)?.set(bankedCoin)?.addOnSuccessListener {
+            Log.d(tag, "[bankCoin] path ${firestoreBanked?.document(coin.id)?.path}")
+            firestoreBanked?.document(coin.id)?.update(bankedCoin)?.addOnSuccessListener {
                 Toast.makeText(this, "Coin banked", Toast.LENGTH_SHORT).show()
 
             }?.addOnFailureListener{
@@ -356,24 +358,6 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     }
 
 
-
-    private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
-        when (item.itemId) {
-            R.id.navigation_home -> {
-                startActivity(Intent(this@BankActivity, ProfileActivity::class.java))
-                return@OnNavigationItemSelectedListener true
-            }
-            R.id.navigation_map-> {
-                startActivity(Intent(this@BankActivity, MainActivity::class.java))
-                return@OnNavigationItemSelectedListener true
-            }
-            R.id.navigation_bank -> {
-                return@OnNavigationItemSelectedListener true
-            }
-
-        }
-        false
-    }
 
 companion object {
     private const val COLLECTION_KEY = "Users"

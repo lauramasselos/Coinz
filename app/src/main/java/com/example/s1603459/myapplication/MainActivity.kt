@@ -4,7 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.os.Bundle
-import android.support.design.widget.BottomNavigationView
+import android.support.design.widget.NavigationView
+import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
@@ -35,7 +36,6 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.geojson.*
 import com.mapbox.mapboxsdk.annotations.IconFactory
 import com.mapbox.mapboxsdk.annotations.Marker
-import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
@@ -94,8 +94,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         setContentView(R.layout.activity_main)
         initialise()
 //        setSupportActionBar(toolbar)
-        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
-
         downloadDate = SimpleDateFormat("YYYY/MM/dd").format(Date())
 
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
@@ -282,11 +280,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                 markerLocation.latitude = marker.value.position.latitude
                 markerLocation.longitude = marker.value.position.longitude
                 val distanceToMarker = location!!.distanceTo(markerLocation)
-                Log.d(tag, "[onLocationChanged] ${mDatabaseReference.child("level")}")
                 if (distanceToMarker <= 25 + level) {
                     markersRemoved[marker.key] = marker.value
+                    Log.d(tag, "[removeMarkers] user's level is $level, and collect from a distance of ${25+level} metres")
                 }
             }
+
             for (marker in markersRemoved) {
                 if (markersMap.containsKey(marker.key)) {
                     marker.value.remove()
@@ -396,24 +395,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         if (outState != null) {
             mapView.onSaveInstanceState(outState)
         }
-    }
-
-
-    private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
-        when (item.itemId) {
-            R.id.navigation_home -> {
-                startActivity(Intent(this@MainActivity, ProfileActivity::class.java))
-                return@OnNavigationItemSelectedListener true
-            }
-            R.id.navigation_map-> {
-                return@OnNavigationItemSelectedListener true
-            }
-            R.id.navigation_bank -> {
-                startActivity(Intent(this@MainActivity, BankActivity::class.java))
-                return@OnNavigationItemSelectedListener true
-            }
-        }
-        false
     }
 
     companion object {
