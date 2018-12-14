@@ -31,6 +31,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     private var quidText: TextView? = null
     private var penyText: TextView? = null
 
+    private var tvBackToMap: TextView? = null
     private var btnBank: Button? = null
     private var btnTransfer: Button? = null
     private var walletOfCoins: ArrayList<Coin> = ArrayList()
@@ -80,7 +81,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         getExchangeRate("DOLR")
         getExchangeRate("QUID")
         getExchangeRate("PENY")
-        spinner = findViewById(R.id.walletSpinner)
+        spinner = findViewById<View>(R.id.walletSpinner) as Spinner
         spinner.onItemSelectedListener = this
         getCoinIds()
 
@@ -159,7 +160,8 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             dialog.show()
         }
 
-
+        tvBackToMap = findViewById<View>(R.id.tv_back_to_map) as TextView
+        tvBackToMap!!.setOnClickListener { startActivity(Intent(this, MainActivity::class.java)) }
 
     }
 

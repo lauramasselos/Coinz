@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="preloaded_fonts" translatable="false">
+        <item>@font/alegreya_sans_sc_thin</item>
+        <item>@font/bungee_shade</item>
+        <item>@font/racing_sans_one</item>
+    </array>
+</resources>

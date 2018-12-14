@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.os.Bundle
+import android.support.design.widget.FloatingActionButton
 import android.support.design.widget.NavigationView
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.AppCompatActivity
@@ -84,6 +85,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private var email: String? = null
     private var isEmailVerified: Boolean? = null
     private var btnLogout: Button? = null
+    private var btnBank: FloatingActionButton? = null
+    private var btnProfile: FloatingActionButton? = null
     private var markers: HashMap<String, Marker> = HashMap()
     private var markersRemoved: HashMap<String, Marker> = HashMap()
 
@@ -113,7 +116,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         email = user!!.email
         isEmailVerified = user?.isEmailVerified
         btnLogout = findViewById<View>(R.id.signOutBtn) as Button
+        btnBank = findViewById<View>(R.id.bankBtn) as FloatingActionButton
+        btnProfile = findViewById<View>(R.id.profileBtn) as FloatingActionButton
         btnLogout!!.setOnClickListener { signOut() }
+        btnBank!!.setOnClickListener { startActivity(Intent(this, BankActivity::class.java)) }
+        btnProfile!!.setOnClickListener { startActivity(Intent(this, ProfileActivity::class.java)) }
         firestore = FirebaseFirestore.getInstance()
         val settings = FirebaseFirestoreSettings.Builder().setTimestampsInSnapshotsEnabled(true).build()
         firestore?.firestoreSettings = settings
