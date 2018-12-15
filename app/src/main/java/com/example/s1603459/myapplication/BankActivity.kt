@@ -88,76 +88,83 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
         btnTransfer = findViewById<View>(R.id.transferBtn) as Button
         btnTransfer!!.setOnClickListener{
-
-            firestoreWallet!!.get().addOnSuccessListener { firebaseWallet ->
-                coinsBankedTodayUserCollected = 0
-                val coinSelected = spinner.selectedItem as Coin
-                for (coin in firebaseWallet) {
-                     if (coin.data[DATE_BANKED_FIELD] == todaysDate && coin.data[COLLECTED_BY_USER_FIELD] == "true" && coin.data[IS_BANKED_FIELD] == "true") {
-                      coinsBankedTodayUserCollected++
-                    }
-                }
-                when {
-                    coinSelected.collectedByUser == "false" -> Toast.makeText(this, "You cannot transfer this coin, it's been sent to you!", Toast.LENGTH_SHORT).show()
-                    coinsBankedTodayUserCollected < 25 -> Toast.makeText(this, "You can't send spare change until you bank 25 coins today!", Toast.LENGTH_SHORT).show()
-                    else -> {
-                        val builder = AlertDialog.Builder(this)
-
-                        builder.setTitle("Transfer Coin")
-                        builder.setMessage("Enter email of user you wish to transfer your coin to.")
-
-                        // Set an EditText view to get user input
-                        val input = EditText(this)
-                        builder.setView(input)
-
-                        builder.setPositiveButton("OK") { _, _ ->
-                            doesUserExist(input.text.toString())
-                            Log.d(tag, "[btnTransfer] setPositiveButton email ${input.text}")
+            if (spinner.selectedItem.toString() == "Wallet is empty!") {
+                Toast.makeText(this, "Walk around to collect more coins; alternatively, get a friend to transfer you their spare change!", Toast.LENGTH_LONG).show()
+            } else {
+                firestoreWallet!!.get().addOnSuccessListener { firebaseWallet ->
+                    coinsBankedTodayUserCollected = 0
+                    val coinSelected = spinner.selectedItem as Coin
+                    for (coin in firebaseWallet) {
+                        if (coin.data[DATE_BANKED_FIELD] == todaysDate && coin.data[COLLECTED_BY_USER_FIELD] == "true" && coin.data[IS_BANKED_FIELD] == "true") {
+                            coinsBankedTodayUserCollected++
                         }
-
-                        builder.setNegativeButton("Cancel") { _, _ ->
-                            // Canceled.
-                        }
-
-                        builder.show()
                     }
+                    when {
+                        coinSelected.collectedByUser == "false" -> Toast.makeText(this, "You cannot transfer this coin, it's been sent to you!", Toast.LENGTH_SHORT).show()
+                        coinsBankedTodayUserCollected < 25 -> Toast.makeText(this, "You can't send spare change until you bank 25 coins today!", Toast.LENGTH_SHORT).show()
+                        else -> {
+                            val builder = AlertDialog.Builder(this)
+
+                            builder.setTitle("Transfer Coin")
+                            builder.setMessage("Enter email of user you wish to transfer your coin to.")
+
+                            // Set an EditText view to get user input
+                            val input = EditText(this)
+                            builder.setView(input)
+
+                            builder.setPositiveButton("OK") { _, _ ->
+                                doesUserExist(input.text.toString())
+                                Log.d(tag, "[btnTransfer] setPositiveButton email ${input.text}")
+                            }
+
+                            builder.setNegativeButton("Cancel") { _, _ ->
+                                // Canceled.
+                            }
+
+                            builder.show()
+                        }
+                    }
+
                 }
 
             }
-
         }
 
 
 
         btnBank = findViewById<View>(R.id.bankBtn) as Button
         btnBank!!.setOnClickListener{
-            // Initialize a new instance of
-            val builder = AlertDialog.Builder(this@BankActivity)
-            // Set the alert dialog title
-            builder.setTitle("Convert to Gold")
-            // Display a message on alert dialog
-            builder.setMessage("Are you want to bank this coin?")
-            // Set a positive button and its click listener on alert dialog
-            builder.setPositiveButton("Yes"){_, _ ->
-                // Do something when user press the positive button
-                fetchCoin()
-                Log.d(tag, "[initialise] btnBank")
+            if (spinner.selectedItem.toString() == "Wallet is empty!") {
+                Toast.makeText(this, "Walk around to collect more coins; alternatively, get a friend to transfer you their spare change!", Toast.LENGTH_LONG).show()
+            } else {
+                // Initialize a new instance of
+                val builder = AlertDialog.Builder(this@BankActivity)
+                // Set the alert dialog title
+                builder.setTitle("Convert to Gold")
+                // Display a message on alert dialog
+                builder.setMessage("Are you want to bank this coin?")
+                // Set a positive button and its click listener on alert dialog
+                builder.setPositiveButton("Yes"){_, _ ->
+                    // Do something when user press the positive button
+                    fetchCoin()
+                    Log.d(tag, "[initialise] btnBank")
 
+                }
+                // Display a negative button on alert dialog
+                builder.setNegativeButton("No"){ _, _ ->
+                }
+
+                // Display a neutral button on alert dialog
+                builder.setNeutralButton("Transfer"){_,_ ->
+                    btnTransfer!!.callOnClick()
+                }
+
+                // Finally, make the alert dialog using builder
+                val dialog: AlertDialog = builder.create()
+
+                // Display the alert dialog on app interface
+                dialog.show()
             }
-            // Display a negative button on alert dialog
-            builder.setNegativeButton("No"){ _, _ ->
-            }
-
-            // Display a neutral button on alert dialog
-            builder.setNeutralButton("Transfer"){_,_ ->
-                btnTransfer!!.callOnClick()
-            }
-
-            // Finally, make the alert dialog using builder
-            val dialog: AlertDialog = builder.create()
-
-            // Display the alert dialog on app interface
-            dialog.show()
         }
 
         tvBackToMap = findViewById<View>(R.id.tv_back_to_map) as TextView
@@ -214,13 +221,13 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 Log.d(tag, "[addCoinsToSpinner] Wallet is empty")
                 val emptyWalletList = ArrayList<String>()
                 emptyWalletList.add("Wallet is empty!")
-                val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, emptyWalletList)
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                val adapter = ArrayAdapter(this, R.layout.spinner_layout, emptyWalletList)
+                adapter.setDropDownViewResource(R.layout.spinner_dropdown_layout)
                 spinner.adapter = adapter
             } else {
                 Log.d(tag, "[addCoinsToSpinner] Wallet is $wallet")
-                val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, wallet)
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                val adapter = ArrayAdapter(this, R.layout.spinner_layout, wallet)
+                adapter.setDropDownViewResource(R.layout.spinner_dropdown_layout)
                 spinner.adapter = adapter
             }
 
@@ -230,23 +237,30 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         Log.d(tag, "Selected ${spinner.selectedItem}")
         firestoreWallet?.get()?.addOnSuccessListener { firebaseWallet ->
             coinsBankedTodayUserCollected = 0
+            var coinsInWallet = 0
             val coinSelected = spinner.selectedItem as Coin
             for (coin in firebaseWallet) {
                 if (coin.data[DATE_BANKED_FIELD] == todaysDate && coin.data[COLLECTED_BY_USER_FIELD] == "true" && coin.data[IS_BANKED_FIELD] == "true") {
                     coinsBankedTodayUserCollected++
                 }
+                if (coin.data[IS_BANKED_FIELD] == "false" && coin.data[TRANSFER_FIELD] == "false") {
+                    coinsInWallet++
+                }
             }
-
-            Log.d(tag, "coins banked today $coinsBankedTodayUserCollected")
-
-            for (coin in firebaseWallet) {
-                if (coinSelected.id == coin.id) {
-                    if (coinsBankedTodayUserCollected >= 25 && coinSelected.collectedByUser == "true") {
-                        Toast.makeText(this, "You have already banked 25 of your own coins today!", Toast.LENGTH_SHORT).show()
-                        break
-                    } else {
-                        bankCoin(coinSelected)
-                        break
+            if (coinsInWallet == 0) {
+                Log.d(tag, "Selected item is a string!")
+                Toast.makeText(this, "Walk around to collect more coins; alternatively, get a friend to transfer you their spare change!", Toast.LENGTH_LONG).show()
+            } else {
+                Log.d(tag, "Coins in wallet = $coinsInWallet; coins banked today $coinsBankedTodayUserCollected")
+                for (coin in firebaseWallet) {
+                    if (coinSelected.id == coin.id) {
+                        if (coinsBankedTodayUserCollected >= 25 && coinSelected.collectedByUser == "true") {
+                            Toast.makeText(this, "You have already banked 25 of your own coins today!", Toast.LENGTH_SHORT).show()
+                            break
+                        } else {
+                            bankCoin(coinSelected)
+                            break
+                        }
                     }
                 }
             }
