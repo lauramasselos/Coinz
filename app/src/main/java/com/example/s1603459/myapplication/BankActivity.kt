@@ -2,10 +2,13 @@ package com.example.s1603459.myapplication
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkInfo
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.support.design.widget.BottomNavigationView
+import android.support.design.widget.Snackbar
 import android.util.Log
 import android.view.View
 import android.widget.*
@@ -13,34 +16,28 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.*
-import kotlinx.android.synthetic.main.activity_main.*
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 import android.widget.EditText
-
+import kotlinx.android.synthetic.main.activity_bank.*
 
 
 class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
     private var todaysDate = "" // YYYY/MM/DD
     private val tag = "BankActivity"
-
     private var shilText: TextView? = null
     private var dolrText: TextView? = null
     private var quidText: TextView? = null
     private var penyText: TextView? = null
-
     private var tvBackToMap: TextView? = null
     private var btnBank: Button? = null
     private var btnTransfer: Button? = null
     private var walletOfCoins: ArrayList<Coin> = ArrayList()
-
     private var coinsBankedTodayUserCollected: Int = 0
-
     private lateinit var email: String
     private lateinit var spinner: Spinner
-
     private var mAuth: FirebaseAuth? = null
     private var user: FirebaseUser? = null
     private var firestore: FirebaseFirestore? = null
@@ -58,12 +55,10 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         initialise()
     }
 
-    //    @SuppressLint("SetTextI18n")
     private fun initialise() {
         mDatabase = FirebaseDatabase.getInstance()
         mAuth = FirebaseAuth.getInstance()
         user = mAuth!!.currentUser
-//        name = user!!.displayName!!
         email = user!!.email!!
         firestore = FirebaseFirestore.getInstance()
         val settings = FirebaseFirestoreSettings.Builder().setTimestampsInSnapshotsEnabled(true).build()
@@ -85,11 +80,18 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         spinner.onItemSelectedListener = this
         getCoinIds()
 
-
         btnTransfer = findViewById<View>(R.id.transferBtn) as Button
         btnTransfer!!.setOnClickListener{
-            if (spinner.selectedItem.toString() == "Wallet is empty!") {
-                Toast.makeText(this, "Walk around to collect more coins; alternatively, get a friend to transfer you their spare change!", Toast.LENGTH_LONG).show()
+            Log.d(tag, "[btnTransfer] onClick")
+            if (!connected()) {
+                Log.d(tag, "[btnTransfer] !connected()")
+                Snackbar.make(coordinatorLayout_bank, "No internet connection!", Snackbar.LENGTH_INDEFINITE)
+                        .setAction("Retry") {
+                            finish()
+                            startActivity(Intent(this, BankActivity::class.java))
+                        }.show()
+            } else if (spinner.selectedItem.toString() == "Wallet is empty!") {
+                Snackbar.make(coordinatorLayout_bank, "Walk around to collect more coins; alternatively, get a friend to transfer you their spare change!", Snackbar.LENGTH_LONG).show()
             } else {
                 firestoreWallet!!.get().addOnSuccessListener { firebaseWallet ->
                     coinsBankedTodayUserCollected = 0
@@ -100,15 +102,12 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                         }
                     }
                     when {
-                        coinSelected.collectedByUser == "false" -> Toast.makeText(this, "You cannot transfer this coin, it's been sent to you!", Toast.LENGTH_SHORT).show()
-                        coinsBankedTodayUserCollected < 25 -> Toast.makeText(this, "You can't send spare change until you bank 25 coins today!", Toast.LENGTH_SHORT).show()
+                        coinSelected.collectedByUser == "false" -> Snackbar.make(coordinatorLayout_bank, "You cannot transfer this coin, it's been sent to you!", Snackbar.LENGTH_SHORT).show()
+                        coinsBankedTodayUserCollected < 25 -> Snackbar.make(coordinatorLayout_bank, "You can't send spare change until you bank 25 coins today!", Snackbar.LENGTH_SHORT).show()
                         else -> {
                             val builder = AlertDialog.Builder(this)
-
                             builder.setTitle("Transfer Coin")
                             builder.setMessage("Enter email of user you wish to transfer your coin to.")
-
-                            // Set an EditText view to get user input
                             val input = EditText(this)
                             builder.setView(input)
 
@@ -116,9 +115,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                                 doesUserExist(input.text.toString())
                                 Log.d(tag, "[btnTransfer] setPositiveButton email ${input.text}")
                             }
-
                             builder.setNegativeButton("Cancel") { _, _ ->
-                                // Canceled.
                             }
 
                             builder.show()
@@ -131,44 +128,40 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         }
 
 
-
         btnBank = findViewById<View>(R.id.bankBtn) as Button
         btnBank!!.setOnClickListener{
-            if (spinner.selectedItem.toString() == "Wallet is empty!") {
-                Toast.makeText(this, "Walk around to collect more coins; alternatively, get a friend to transfer you their spare change!", Toast.LENGTH_LONG).show()
+            if (!connected()) {
+                Log.d(tag, "[btnBank] !connected()")
+                Snackbar.make(coordinatorLayout_bank, "No internet connection!", Snackbar.LENGTH_INDEFINITE)
+                        .setAction("Retry") {
+                            finish()
+                            startActivity(Intent(this, BankActivity::class.java))
+                        }.show()
+            } else if (spinner.selectedItem.toString() == "Wallet is empty!") {
+                Snackbar.make(coordinatorLayout_bank, "Walk around to collect more coins; alternatively, get a friend to transfer you their spare change!", Snackbar.LENGTH_LONG).show()
             } else {
-                // Initialize a new instance of
                 val builder = AlertDialog.Builder(this@BankActivity)
-                // Set the alert dialog title
                 builder.setTitle("Convert to Gold")
-                // Display a message on alert dialog
-                builder.setMessage("Are you want to bank this coin?")
-                // Set a positive button and its click listener on alert dialog
+                builder.setMessage("Are you sure you want to bank this coin?")
                 builder.setPositiveButton("Yes"){_, _ ->
-                    // Do something when user press the positive button
                     fetchCoin()
                     Log.d(tag, "[initialise] btnBank")
-
                 }
-                // Display a negative button on alert dialog
                 builder.setNegativeButton("No"){ _, _ ->
                 }
-
-                // Display a neutral button on alert dialog
                 builder.setNeutralButton("Transfer"){_,_ ->
                     btnTransfer!!.callOnClick()
                 }
-
-                // Finally, make the alert dialog using builder
                 val dialog: AlertDialog = builder.create()
-
-                // Display the alert dialog on app interface
                 dialog.show()
             }
         }
 
         tvBackToMap = findViewById<View>(R.id.tv_back_to_map) as TextView
-        tvBackToMap!!.setOnClickListener { startActivity(Intent(this, MainActivity::class.java)) }
+        tvBackToMap!!.setOnClickListener {
+            finish()
+            startActivity(Intent(this, MainActivity::class.java))
+        }
 
     }
 
@@ -195,6 +188,14 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     }
 
     private fun getCoinIds() {
+        if (!connected()) {
+            Log.d(tag, "[getCoinIds] !connected()")
+            Snackbar.make(coordinatorLayout_bank, "No internet connection!", Snackbar.LENGTH_INDEFINITE)
+                    .setAction("Retry") {
+                        finish()
+                        startActivity(Intent(this, BankActivity::class.java))
+                    }.show()
+        } else {
             firestoreWallet?.get()?.addOnSuccessListener { firebaseWallet ->
                 for (coin in firebaseWallet) {
                     val id = coin.id
@@ -205,7 +206,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                     val value = coin.data[VALUE_FIELD].toString().replace("\"", "")
                     val transferred = coin.data[TRANSFER_FIELD].toString().replace("\"", "")
                     val newCoin = Coin(id, banked, collectedByUser, currency, date, value, transferred)
-                    if (banked == "false" && ((transferred == "true" && collectedByUser == "false") || (transferred == "false" && collectedByUser == "true"))){
+                    if (banked == "false" && ((transferred == "true" && collectedByUser == "false") || (transferred == "false" && collectedByUser == "true"))) {
                         Log.d(tag, "[getCoinIds] inside if statement")
                         walletOfCoins.add(newCoin)
                     }
@@ -213,10 +214,14 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 Log.d(tag, "[getCoinIds] Wallet is $walletOfCoins")
 
                 addCoinsToSpinner(walletOfCoins)
-             }
+            }
+        }
     }
 
         private fun addCoinsToSpinner(wallet: ArrayList<Coin>) {
+            if (spinner.adapter is ArrayAdapter<*>) {
+                (spinner.adapter as ArrayAdapter<*>).clear()
+            }
             if (wallet.isEmpty()) {
                 Log.d(tag, "[addCoinsToSpinner] Wallet is empty")
                 val emptyWalletList = ArrayList<String>()
@@ -226,8 +231,9 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 spinner.adapter = adapter
             } else {
                 Log.d(tag, "[addCoinsToSpinner] Wallet is $wallet")
-                val adapter = ArrayAdapter(this, R.layout.spinner_layout, wallet)
+                val adapter = ArrayAdapter(this, R.layout.spinner_layout, wallet.clone() as ArrayList<*>)
                 adapter.setDropDownViewResource(R.layout.spinner_dropdown_layout)
+
                 spinner.adapter = adapter
             }
 
@@ -247,15 +253,11 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                     coinsInWallet++
                 }
             }
-            if (coinsInWallet == 0) {
-                Log.d(tag, "Selected item is a string!")
-                Toast.makeText(this, "Walk around to collect more coins; alternatively, get a friend to transfer you their spare change!", Toast.LENGTH_LONG).show()
-            } else {
                 Log.d(tag, "Coins in wallet = $coinsInWallet; coins banked today $coinsBankedTodayUserCollected")
                 for (coin in firebaseWallet) {
                     if (coinSelected.id == coin.id) {
                         if (coinsBankedTodayUserCollected >= 25 && coinSelected.collectedByUser == "true") {
-                            Toast.makeText(this, "You have already banked 25 of your own coins today!", Toast.LENGTH_SHORT).show()
+                            Snackbar.make(coordinatorLayout_bank, "You have already banked 25 of your own coins today!", Snackbar.LENGTH_SHORT).show()
                             break
                         } else {
                             bankCoin(coinSelected)
@@ -263,7 +265,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                         }
                     }
                 }
-            }
+
         }
     }
 
@@ -279,12 +281,12 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             }
             if (userExists) {
                 if (input == email) {
-                    Toast.makeText(this, "You can't send yourself coinz!", Toast.LENGTH_SHORT).show()
+                    Snackbar.make(coordinatorLayout_bank, "You can't send yourself coinz!", Snackbar.LENGTH_SHORT).show()
                 } else {
                     transferTo(input)
                 }
             } else {
-                Toast.makeText(this, "User $input doesn't exist!", Toast.LENGTH_SHORT).show()
+                Snackbar.make(coordinatorLayout_bank, "User $input doesn't exist!", Snackbar.LENGTH_SHORT).show()
             }
         }
     }
@@ -296,8 +298,12 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 coinSelected.transferred = "true"
                 Log.d(tag, "Coin is $coinSelected")
             val id = coinSelected.id
-            val transferId = "${coinSelected.id}TRANSFER"
-            coinSelected.id = transferId
+
+            for (Coin in it) {
+                if (coinSelected.id == Coin.id) {
+                    coinSelected.id = coinSelected.id + 0
+                }
+            }
 
 
                 firestoreUsers!!.document(friendEmail).collection(SUB_COLLECTION_KEY).document(coinSelected.id).set(coinSelected).addOnSuccessListener {
@@ -311,7 +317,8 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
                 firestoreWallet?.document(coinSelected.id)?.set(coinSelected)?.addOnSuccessListener {
                     Log.d(tag, "[transferTo] Coin removed from user's display wallet")
-                    Toast.makeText(this, "Coin sent to $friendEmail!", Toast.LENGTH_SHORT).show()
+                    Snackbar.make(coordinatorLayout_bank, "Coin sent to $friendEmail!", Snackbar.LENGTH_SHORT).show()
+                    finish()
                     startActivity(Intent(this, BankActivity::class.java))
                 }?.addOnFailureListener{
                     Log.d(tag, "[transferTo] Error removing coin")
@@ -335,8 +342,8 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
             )
             Log.d(tag, "[bankCoin] path ${firestoreBanked?.document(coin.id)?.path}")
-            firestoreBanked?.document(coin.id)?.update(bankedCoin)?.addOnSuccessListener {
-                Toast.makeText(this, "Coin banked", Toast.LENGTH_SHORT).show()
+            firestoreBanked?.document(coin.id)?.set(bankedCoin)?.addOnSuccessListener {
+                Snackbar.make(coordinatorLayout_bank, "Coin banked!", Snackbar.LENGTH_SHORT).show()
 
             }?.addOnFailureListener{
                 Log.d(tag, "Failed to bank coin")
@@ -348,6 +355,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             )
 
             firestoreWallet?.document(coin.id)?.update(modifiedCoin)
+            finish()
             startActivity(Intent(this, BankActivity::class.java))
 
         }.addOnFailureListener{
@@ -355,22 +363,20 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         }
     }
 
-
-//    private fun displayCoinInformation(coin: Coin) {
-//        val currency = coin.currency
-//        val value = coin.value
-//        val id = coin.id
-//        val coinInfo = "Currency: $currency\nValue: $value\nID: $id"
-//        Toast.makeText(this, coinInfo, Toast.LENGTH_LONG).show()
-//    }
-
-
     override fun onNothingSelected(parent: AdapterView<*>?) {
-        Toast.makeText(this, "Please select a coin to bank or transfer.", Toast.LENGTH_SHORT).show()
+        Snackbar.make(coordinatorLayout_bank, "Please select a coin to bank or transfer.", Snackbar.LENGTH_SHORT).show()
     }
 
     override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-            //displayCoinInformation(coin)
+
+    }
+
+    private fun connected(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE)
+        return if (connectivityManager is ConnectivityManager) {
+            val networkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo
+            networkInfo?.isConnected ?: false
+        } else false
     }
 
 

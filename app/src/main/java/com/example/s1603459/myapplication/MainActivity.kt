@@ -3,10 +3,11 @@ package com.example.s1603459.myapplication
 import android.content.Context
 import android.content.Intent
 import android.location.Location
+import android.net.ConnectivityManager
+import android.net.NetworkInfo
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
-import android.support.design.widget.NavigationView
-import android.support.v4.widget.DrawerLayout
+import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
@@ -16,7 +17,6 @@ import com.mapbox.android.core.location.LocationEnginePriority
 import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.android.core.permissions.PermissionsListener
 import com.mapbox.android.core.permissions.PermissionsManager
-import android.widget.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.*
@@ -37,38 +37,29 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.geojson.*
 import com.mapbox.mapboxsdk.annotations.IconFactory
 import com.mapbox.mapboxsdk.annotations.Marker
+import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
+
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListener, LocationEngineListener, DownloadCompleteListener  {
 
-
     private val tag = "MainActivity"
-
     private var downloadDate = "" // YYYY/MM/DD
-
     private val preferencesFile = "MyPrefsFile"
-
     private lateinit var mapView: MapView
     private lateinit var map: MapboxMap
-
     private lateinit var originLocation: Location
     private lateinit var permissionsManager: PermissionsManager
-
     private lateinit var jsonString: DownloadFileTask
     private lateinit var geoJSONFeatureCollection: FeatureCollection
-
     private lateinit var mDatabaseReference: DatabaseReference
-
     private var locationEngine: LocationEngine? = null
     private var locationLayerPlugin: LocationLayerPlugin? = null
-
     private var coinsCollected: ArrayList<String> = ArrayList()
-
-    //Firebase references
     private var mDatabase: FirebaseDatabase? = null
     private var mAuth: FirebaseAuth? = null
     private var user: FirebaseUser? = null
@@ -77,14 +68,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private var firestoreUser: DocumentReference? = null
     private var firestoreWallet: CollectionReference? = null
     private var firestoreExchangeRates: DocumentReference? = null
-
-
-
-    //UI elements
     private var name: String? = null
     private var email: String? = null
     private var isEmailVerified: Boolean? = null
-    private var btnLogout: Button? = null
     private var btnBank: FloatingActionButton? = null
     private var btnProfile: FloatingActionButton? = null
     private var markers: HashMap<String, Marker> = HashMap()
@@ -96,43 +82,42 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         Log.d(tag, "[onCreate] method")
         setContentView(R.layout.activity_main)
         initialise()
-//        setSupportActionBar(toolbar)
         downloadDate = SimpleDateFormat("YYYY/MM/dd").format(Date())
-
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
     }
 
-
     private fun initialise() {
-        mDatabase = FirebaseDatabase.getInstance()
-        mDatabaseReference = mDatabase!!.reference.child("Users")
-        Log.d(tag, "[initialise] mDatabase $mDatabase")
-        mAuth = FirebaseAuth.getInstance()
-        user = mAuth!!.currentUser
-        name = user!!.displayName
-        email = user!!.email
-        isEmailVerified = user?.isEmailVerified
-        btnLogout = findViewById<View>(R.id.signOutBtn) as Button
-        btnBank = findViewById<View>(R.id.bankBtn) as FloatingActionButton
-        btnProfile = findViewById<View>(R.id.profileBtn) as FloatingActionButton
-        btnLogout!!.setOnClickListener { signOut() }
-        btnBank!!.setOnClickListener { startActivity(Intent(this, BankActivity::class.java)) }
-        btnProfile!!.setOnClickListener { startActivity(Intent(this, ProfileActivity::class.java)) }
-        firestore = FirebaseFirestore.getInstance()
-        val settings = FirebaseFirestoreSettings.Builder().setTimestampsInSnapshotsEnabled(true).build()
-        firestore?.firestoreSettings = settings
-        firestoreUser = firestore?.collection(COLLECTION_KEY)?.document(email!!)
-        firestoreWallet = firestore?.collection(COLLECTION_KEY)?.document(email!!)?.collection(SUB_COLLECTION_KEY) // path Users/<user>/Wallet
-        firestoreExchangeRates = firestore?.collection("Exchange Rates")?.document("Today's Exchange Rate")
-        firestoreUsers = firestore?.collection("Users")
-    }
-
-    private fun signOut() {
-        mAuth!!.signOut()
-        startActivity(Intent(this, LoginActivity::class.java))
+        if (!connected()){
+            Log.d(tag, "[initialise] !connected()")
+            Snackbar.make(coordinatorLayout, "No internet connection!", Snackbar.LENGTH_INDEFINITE)
+                    .setAction("Retry") {
+                        finish()
+                        startActivity(Intent(this, MainActivity::class.java))
+                    }.show()
+        } else {
+            mDatabase = FirebaseDatabase.getInstance()
+            mDatabaseReference = mDatabase!!.reference.child("Users")
+            Log.d(tag, "[initialise] mDatabase $mDatabase")
+            mAuth = FirebaseAuth.getInstance()
+            user = mAuth!!.currentUser
+            name = user!!.displayName
+            email = user!!.email
+            isEmailVerified = user?.isEmailVerified
+            btnBank = findViewById<View>(R.id.bankBtn) as FloatingActionButton
+            btnProfile = findViewById<View>(R.id.profileBtn) as FloatingActionButton
+            btnBank!!.setOnClickListener { startActivity(Intent(this, BankActivity::class.java)) }
+            btnProfile!!.setOnClickListener { startActivity(Intent(this, ProfileActivity::class.java)) }
+            firestore = FirebaseFirestore.getInstance()
+            val settings = FirebaseFirestoreSettings.Builder().setTimestampsInSnapshotsEnabled(true).build()
+            firestore?.firestoreSettings = settings
+            firestoreUser = firestore?.collection(COLLECTION_KEY)?.document(email!!)
+            firestoreWallet = firestore?.collection(COLLECTION_KEY)?.document(email!!)?.collection(SUB_COLLECTION_KEY) // path Users/<user>/Wallet
+            firestoreExchangeRates = firestore?.collection("Exchange Rates")?.document("Today's Exchange Rate")
+            firestoreUsers = firestore?.collection("Users")
+        }
     }
 
     override fun onStart() {
@@ -148,24 +133,38 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     }
 
+    private fun connected(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE)
+        return if (connectivityManager is ConnectivityManager) {
+            val networkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo
+            networkInfo?.isConnected ?: false
+        } else false
+    }
+
     override fun onMapReady(mapboxMap: MapboxMap?) {
-        if (mapboxMap == null) {
-            Log.d(tag, "[onMapReady] mapboxMap is null")
+        if (!connected()) {
+            Log.d(tag, "[onMapReady] !connected()")
+            Snackbar.make(coordinatorLayout, "No internet connection!", Snackbar.LENGTH_INDEFINITE)
+                    .setAction("Retry") {
+                        finish()
+                        startActivity(Intent(this, MainActivity::class.java))
+                    }.show()
         } else {
-            Log.d(tag, "[onMapReady] mapboxMap is not null")
-            map = mapboxMap
-            map.uiSettings.isCompassEnabled = true
-            map.uiSettings.isZoomControlsEnabled = true
-            enableLocation()
-            jsonString = DownloadFileTask(this)
-            Log.d(tag, "todays date is $downloadDate")
-            jsonString.execute("http://homepages.inf.ed.ac.uk/stg/coinz/$downloadDate/coinzmap.geojson")
+            if (mapboxMap == null) {
+                Log.d(tag, "[onMapReady] mapboxMap is null")
+            } else {
+                Log.d(tag, "[onMapReady] mapboxMap is not null")
+                map = mapboxMap
+                map.uiSettings.isCompassEnabled = true
+                enableLocation()
+                jsonString = DownloadFileTask(this)
+                Log.d(tag, "todays date is $downloadDate")
+                jsonString.execute("http://homepages.inf.ed.ac.uk/stg/coinz/$downloadDate/coinzmap.geojson")
+            }
         }
     }
 
-
     override fun downloadComplete(result: String) {
-        Log.d(tag, "[downloadComplete]")
         storeExchangeRates(result)
         geoJSONFeatureCollection = FeatureCollection.fromJson(result)
         firestoreWallet?.get()?.addOnSuccessListener { wallet ->
@@ -180,30 +179,27 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             dropMarkers(geoJSONFeatureCollection)
             Log.d(tag, "Error getting wallet")
         }
-
     }
-
 
     private fun storeExchangeRates(result: String) {
-        val jsonObject = JSONObject(result)
-        val jsonRates = jsonObject.getJSONObject("rates")
+            val jsonObject = JSONObject(result)
+            val jsonRates = jsonObject.getJSONObject("rates")
 
-        val newER = mapOf(
-                "SHIL" to jsonRates.get("SHIL"),
-                "DOLR" to jsonRates.get("DOLR"),
-                "QUID" to jsonRates.get("QUID"),
-                "PENY" to jsonRates.get("PENY")
-        )
+            val newER = mapOf(
+                    "SHIL" to jsonRates.get("SHIL"),
+                    "DOLR" to jsonRates.get("DOLR"),
+                    "QUID" to jsonRates.get("QUID"),
+                    "PENY" to jsonRates.get("PENY")
+            )
 
-       firestoreExchangeRates?.set(newER)?.addOnSuccessListener {
-           Log.d(tag, "Exchange rates updated for $downloadDate on Firebase")
-       }?.addOnFailureListener{
-           Log.d(tag, "Failed to set exchange rates for $downloadDate")
-       }
+            firestoreExchangeRates?.set(newER)?.addOnSuccessListener {
+                Log.d(tag, "Exchange rates updated for $downloadDate on Firebase")
+            }?.addOnFailureListener{
+                Log.d(tag, "Failed to set exchange rates for $downloadDate")
+        }
     }
 
-
-    private fun dropMarkers(GeoJSONFeatureCollection:FeatureCollection) {
+    private fun dropMarkers(GeoJSONFeatureCollection: FeatureCollection) {
         val features = GeoJSONFeatureCollection.features()
         for (Feature in features!!) {
             val coordinates = (Feature.geometry() as Point).coordinates()
@@ -211,8 +207,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             val currency = (jsonObject?.get(CURRENCY_FIELD).toString()).replace("\"", "")
             val value = (jsonObject?.get(VALUE_FIELD).toString()).replace("\"", "")
             val id = jsonObject?.get(ID_FIELD).toString()
-                val icon = IconFactory.getInstance(this)
-                val coin = icon.fromResource(R.drawable.pixelcoin)
+            val icon = IconFactory.getInstance(this)
+            val coin = icon.fromResource(R.drawable.pixelcoin)
             if (!coinsCollected.contains(id)) {
                 val marker = map.addMarker(MarkerOptions().position(LatLng(coordinates[1], coordinates[0])).title(currency).snippet(value).icon(coin))
                 markers[id] = marker
@@ -269,13 +265,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     }
 
     override fun onLocationChanged(location: Location?) {
-        Log.d(tag, "[onLocationChanged] method")
-        location?.let {
-            originLocation = location
-            setCameraPosition(location)
-        }
+            Log.d(tag, "[onLocationChanged] method")
+            location?.let {
+                originLocation = location
+                setCameraPosition(location)
+            }
 
-        removeMarkers(markers, location)
+            removeMarkers(markers, location)
     }
 
     private fun removeMarkers(markersMap: HashMap<String, Marker>, location: Location?) {
@@ -313,16 +309,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             if (jsonObject?.get(ID_FIELD).toString() == coinId) {
                currency = jsonObject?.get(CURRENCY_FIELD).toString()
                value = jsonObject?.get(VALUE_FIELD).toString()
-
             }
         }
 
         val newCoin = Coin(coinId, "false", "true", currency, downloadDate, value, "false")
 
-
-
         firestoreWallet?.document(coinId)?.set(newCoin)?.addOnSuccessListener {
-            Toast.makeText(this, "Coin added to wallet", Toast.LENGTH_SHORT).show()}
+            Snackbar.make(coordinatorLayout, "Coin added to wallet", Snackbar.LENGTH_SHORT).show()}
                 ?.addOnFailureListener{
                    Log.d(tag, "Failed to add coin to wallet")
                 }
@@ -330,34 +323,31 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     }
 
-
     @SuppressWarnings("MissingPermission")
     override fun onConnected() {
         Log.d(tag, "[onConnected] requesting location updates")
         locationEngine?.requestLocationUpdates()
     }
 
-
-    override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) { // override
+    override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) {
         Log.d(tag, "[onExplanationNeeded] Permissions: $permissionsToExplain")
-        // Present popup message or dialog
-        Toast.makeText(this, "Permission needed to access location for gameplay.", Toast.LENGTH_LONG).show()
+        Snackbar.make(coordinatorLayout, "Permission needed to access location for game play.", Snackbar.LENGTH_LONG).show()
     }
 
-    override fun onPermissionResult(granted: Boolean) { // override
+    override fun onPermissionResult(granted: Boolean) {
         Log.d(tag, "[onPermissionResult] granted == $granted")
         if (granted) {
             enableLocation()
         } else {
-            // Open a dialogue with the user
+            Snackbar.make(coordinatorLayout, "This app requires location permissions. If you wish to play Coinz, please allow location access.", Snackbar.LENGTH_LONG).show()
+            finish()
         }
     }
-    //
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         Log.d(tag, "[onRequestPermissionsResult] method")
         permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
-
 
     override fun onResume() {
         Log.d(tag, "[onResume] method")
@@ -412,6 +402,5 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         private const val CURRENCY_FIELD = "currency"
         private const val COLLECTED_BY_USER_FIELD = "collectedByUser"
     }
-
 
 }

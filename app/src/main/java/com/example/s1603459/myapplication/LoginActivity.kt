@@ -6,14 +6,15 @@ import android.app.ProgressDialog
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.design.widget.Snackbar
 import android.util.*
 import android.view.View
-import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import android.text.TextUtils
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import kotlinx.android.synthetic.main.activity_login.*
 
 class LoginActivity : AppCompatActivity() {
 
@@ -40,6 +41,7 @@ class LoginActivity : AppCompatActivity() {
         if (user != null) {
             mProgressBar!!.setMessage("Logging you in...")
             mProgressBar!!.show()
+            finish()
             startActivity(Intent(this@LoginActivity, MainActivity::class.java))
         }
     }
@@ -77,18 +79,18 @@ class LoginActivity : AppCompatActivity() {
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.e(tag, "signInWithEmail:failure", task.exception)
-                            Toast.makeText(this@LoginActivity, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show()
+                            Snackbar.make(main_layout, "Authentication failed.", Snackbar.LENGTH_SHORT).show()
                         }
                     }
         } else {
-            Toast.makeText(this, "Enter all details", Toast.LENGTH_SHORT).show()
+            Snackbar.make(main_layout, "Enter all details", Snackbar.LENGTH_SHORT).show()
         }
     }
 
     private fun updateUI() {
         val intent = Intent(this@LoginActivity, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        finish()
         startActivity(intent)
     }
 

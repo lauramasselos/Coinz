@@ -4,6 +4,8 @@
     android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/gray"
+    android:backgroundTint="@color/gray"
     android:orientation="vertical"
     android:weightSum="3">
 
@@ -11,36 +13,48 @@
         android:id="@+id/et_email"
         style="@style/viewCustom"
         android:ems="10"
+        android:fontFamily="@font/orbitron"
         android:hint="Email"
-        android:inputType="textEmailAddress" />
+        android:inputType="textEmailAddress"
+        android:textColor="@android:color/white" />
+
     <EditText
         android:id="@+id/et_password"
         style="@style/viewCustom"
         android:layout_below="@id/et_email"
         android:ems="10"
+        android:fontFamily="@font/orbitron"
         android:hint="Password"
-        android:inputType="textPassword" />
+        android:inputType="textPassword"
+        android:textColor="@android:color/white" />
+
     <Button
         android:id="@+id/btn_login"
         style="@style/viewCustom"
         android:layout_below="@id/et_password"
-        android:background="@color/colorAccent"
+        android:background="@android:color/holo_red_dark"
+        android:fontFamily="@font/orbitron"
         android:text="@string/login_title"
         android:textColor="@android:color/white"
         android:textStyle="bold" />
+
     <TextView
         android:id="@+id/tv_forgot_password"
         style="@style/viewCustom"
         android:layout_below="@id/btn_login"
         android:clickable="true"
+        android:fontFamily="@font/orbitron"
         android:gravity="center_horizontal"
         android:text="Forgot Password?"
-        android:textSize="20sp" />
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
+
     <Button
         android:id="@+id/btn_register_account"
         style="@style/viewCustom"
         android:layout_alignParentBottom="true"
-        android:background="@color/colorAccent"
+        android:background="@android:color/holo_red_dark"
+        android:fontFamily="@font/orbitron"
         android:text="@string/create_act"
         android:textColor="@android:color/white"
         android:textStyle="bold" />

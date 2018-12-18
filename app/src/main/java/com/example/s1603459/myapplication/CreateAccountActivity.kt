@@ -6,40 +6,34 @@ import android.app.ProgressDialog
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.design.widget.Snackbar
 import android.text.TextUtils
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
+import kotlinx.android.synthetic.main.activity_create_account.*
 
 class CreateAccountActivity : AppCompatActivity() {
 
-
     private val tag = "CreateAccountActivity"
-
-    //UI elements
     private var etFirstName: EditText? = null
     private var etLastName: EditText? = null
     private var etEmail: EditText? = null
     private var etPassword: EditText? = null
     private var btnCreateAccount: Button? = null
     private var mProgressBar: ProgressDialog? = null
-
-    //Firebase references
     private lateinit var mDatabaseReference: DatabaseReference
     private var mDatabase: FirebaseDatabase? = null
     private var mAuth: FirebaseAuth? = null
     private var firestore: FirebaseFirestore? = null
     private var firestoreUsers: DocumentReference? = null
-
-    //global variables
     private var firstName: String? = null
     private var lastName: String? = null
     private var email: String? = null
@@ -80,27 +74,23 @@ class CreateAccountActivity : AppCompatActivity() {
             mAuth!!.createUserWithEmailAndPassword(email!!, password!!).addOnCompleteListener(this) { task ->
                 mProgressBar!!.hide()
                 if (task.isSuccessful) {
-                    // Sign in success, update UI with the signed-in user's information
                     Log.d(tag, "createUserWithEmail:success")
                     val user = mAuth!!.currentUser
                     val usersEmail = user!!.email
-                    firestoreUsers = firestore?.collection(COLLECTION_KEY)?.document(usersEmail!!)
-                    //Verify Email
+                    firestoreUsers = firestore?.collection("Users")?.document(usersEmail!!)
                     verifyEmail()
                     updateUserInfoAndUI()
 
                     val name = "$firstName $lastName"
                     writeNewUser(user.uid, name, user.email!!)
                 } else {
-                    // If sign in fails, display a message to the user.
                     Log.w(tag, "createUserWithEmail:failure", task.exception)
-                    Toast.makeText(this@CreateAccountActivity, "Account already exists!",
-                            Toast.LENGTH_SHORT).show()
+                    Snackbar.make(coordinatorLayout_register, "Account already exists!", Snackbar.LENGTH_SHORT).show()
                 }
             }
 
         } else {
-            Toast.makeText(this, "Enter all details", Toast.LENGTH_SHORT).show()
+            Snackbar.make(coordinatorLayout_register, "Enter all details", Snackbar.LENGTH_SHORT).show()
         }
 
     }
@@ -110,10 +100,7 @@ class CreateAccountActivity : AppCompatActivity() {
         mDatabaseReference.child("users").child(userId).setValue(user)
         mDatabaseReference.child("users").child(userId).child("name").setValue(name)
 
-        // create a message of the form { ”Name”: str1, ”Text”: str2 }
         val newUser = User(userId, name, email, 0)
-
-// send the message and listen for success or failure
         firestoreUsers?.set(newUser)?.addOnSuccessListener{
             Log.d(tag, "User added to database")}
                 ?.addOnFailureListener{
@@ -137,35 +124,19 @@ class CreateAccountActivity : AppCompatActivity() {
         val mUser = mAuth!!.currentUser
         mUser!!.sendEmailVerification().addOnCompleteListener(this) { task ->
             if (task.isSuccessful) {
-                Toast.makeText(this@CreateAccountActivity,
-                        "Verification email sent to " + mUser.email,
-                        Toast.LENGTH_SHORT).show()
+                Snackbar.make(coordinatorLayout_register, "Verification email sent to ${mUser.email}", Snackbar.LENGTH_SHORT).show()
             } else {
                 Log.e(tag, "sendEmailVerification", task.exception)
-                Toast.makeText(this@CreateAccountActivity,
-                        "Failed to send verification email.",
-                        Toast.LENGTH_SHORT).show()
+                Snackbar.make(coordinatorLayout_register, "Failed to send verification email.", Snackbar.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun updateUserInfoAndUI() {
-        //start next activity
         val intent = Intent(this@CreateAccountActivity, LoginActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        finish()
         startActivity(intent)
-    }
-
-
-
-
-
-    companion object {
-        private const val COLLECTION_KEY = "Users"
-        private const val NAME_FIELD = "name"
-        private const val USER_ID_FIELD = "userId"
-        private const val EMAIL_FIELD = "email"
-        private const val LEVEL_FIELD = "level"
     }
 
 }

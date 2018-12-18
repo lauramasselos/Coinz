@@ -5,32 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/coordinatorLayout"
     tools:context=".MainActivity">
-
-    <!--<android.support.v7.widget.Toolbar-->
-    <!--android:id="@+id/toolbar"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--android:background="?attr/colorPrimary" />-->
-
-    <!--<android.support.design.widget.FloatingActionButton-->
-        <!--android:id="@+id/floatingActionButton"-->
-        <!--android:layout_width="59dp"-->
-        <!--android:layout_height="58dp"-->
-        <!--android:layout_marginBottom="8dp"-->
-        <!--android:layout_marginEnd="8dp"-->
-        <!--android:layout_marginStart="8dp"-->
-        <!--android:layout_marginTop="8dp"-->
-        <!--android:clickable="true"-->
-        <!--app:backgroundTint="@android:color/holo_red_dark"-->
-        <!--app:layout_constraintBottom_toBottomOf="parent"-->
-        <!--app:layout_constraintEnd_toEndOf="parent"-->
-        <!--app:layout_constraintHorizontal_bias="0.939"-->
-        <!--app:layout_constraintStart_toStartOf="parent"-->
-        <!--app:layout_constraintTop_toTopOf="@+id/mapView"-->
-        <!--app:layout_constraintVertical_bias="0.915"-->
-        <!--app:rippleColor="@color/black"-->
-        <!--mapbox:srcCompat="@drawable/ic_account_balance_black_24dp" />-->
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/profileBtn"
@@ -68,21 +44,6 @@
         app:layout_constraintTop_toTopOf="@+id/mapView"
         app:layout_constraintVertical_bias="0.983" />
 
-    <Button
-        android:id="@+id/signOutBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:text="Sign Out"
-        app:layout_constraintBottom_toBottomOf="@+id/mapView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.968"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/mapView"
-        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/message"
@@ -105,7 +66,7 @@
         mapbox:mapbox_cameraTargetLat="55.946233"
         mapbox:mapbox_cameraTargetLng="-3.192473"
         mapbox:mapbox_cameraZoom="15"
-        mapbox:mapbox_styleUrl="mapbox://styles/mapbox/streets-v10">
+        mapbox:mapbox_styleUrl="mapbox://styles/mapbox/dark-v9">
 
     </com.mapbox.mapboxsdk.maps.MapView>
 
