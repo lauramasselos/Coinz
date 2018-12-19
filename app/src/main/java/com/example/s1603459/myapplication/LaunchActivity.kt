@@ -10,7 +10,7 @@ import android.view.View
 import android.widget.Button
 import com.google.firebase.auth.FirebaseAuth
 
-// This class is used upon launching the app: it's purpose is to allow users who have logged in previously to remain logged in upon exiting the app
+// This class is used upon launching the app: it's purpose is to allow users who have logged in previously to remain logged in upon exiting the app.
 
 class LaunchActivity : AppCompatActivity() {
 

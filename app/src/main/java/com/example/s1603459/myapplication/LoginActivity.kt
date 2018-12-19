@@ -16,6 +16,8 @@ import android.widget.EditText
 import android.widget.TextView
 import kotlinx.android.synthetic.main.activity_login.*
 
+// This class is used to login a user to the Coinz app.
+
 class LoginActivity : AppCompatActivity() {
 
 

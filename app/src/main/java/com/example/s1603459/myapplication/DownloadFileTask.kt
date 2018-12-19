@@ -6,7 +6,7 @@ import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
-// This class is used to download the map and coin information from the internet (GeoJSON files)
+// This class is used to download the map and coin information from the internet (GeoJSON files).
 
 class DownloadFileTask(private val caller: DownloadCompleteListener) : AsyncTask<String, Void, String>() {
 

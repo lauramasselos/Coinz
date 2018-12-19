@@ -19,7 +19,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import kotlinx.android.synthetic.main.activity_profile.*
 
-// This class is used to show the current user's profile, and how much gold they have at this point.
+// This class is used to show the current user's profile, and how much gold they have at this point
 
 class ProfileActivity : AppCompatActivity() {
 

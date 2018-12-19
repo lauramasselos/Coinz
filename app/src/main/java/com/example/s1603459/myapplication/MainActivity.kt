@@ -44,7 +44,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
-// This class is used as the main UI for the game: it's where users can track their location and collect coins on a different map every day
+// This class is used as the main UI for the game: it's where users can track their location and collect coins on a different map every day.
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListener, LocationEngineListener, DownloadCompleteListener  {
 

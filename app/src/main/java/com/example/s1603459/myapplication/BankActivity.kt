@@ -23,7 +23,7 @@ import android.widget.EditText
 import kotlinx.android.synthetic.main.activity_bank.*
 
 
-// This class is used to handle coin banking and the transferring of spare change to/from users of the app
+// This class is used to handle coin banking and the transferring of spare change to/from users of the app.
 
 class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
