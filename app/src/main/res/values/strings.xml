@@ -1,27 +1,6 @@
-<resources>
-    <string name="app_name">Coinz</string>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name" tools:ignore="PrivateResource">Coinz</string>
     <string name="access_token">pk.eyJ1IjoiczE2MDM0NTkiLCJhIjoiY2pucml1cjQzMDgyZzN2bGxhZjl4aHV2eSJ9.OZvYlGNGkHUEW_xUX9BNNA</string>
-    <string name="title_activity_login">Sign in</string>
-
-    <!-- Strings related to login -->
-    <string name="prompt_email">Email</string>
-    <string name="prompt_password">Password (optional)</string>
-    <string name="action_sign_in">Sign in or register</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="error_invalid_email">This email address is invalid</string>
-    <string name="error_invalid_password">This password is too short</string>
-    <string name="error_incorrect_password">This password is incorrect</string>
-    <string name="error_field_required">This field is required</string>
-    <string name="permission_rationale">"Contacts permissions are needed for providing email
-        completions."
-    </string>
-    <string name="title_activity_sign_in">SignInActivity</string>
-    <string name="title_activity_bottom_navigation">BottomNavigationActivity</string>
-    <string name="title_home">Home</string>
-    <string name="title_map">Map</string>
-    <string name="title_bank">Bank</string>
-
-
     <string name="email">Email</string>
     <string name="password">Password</string>
     <string name="first_name">First Name</string>
@@ -37,19 +16,20 @@
     <string name="shil">SHIL:</string>
     <string name="todays_rates_are">Today\'s rates are:</string>
     <string name="welcome_to_coinz_bank">Welcome to Coinz Bank</string>
-    <string name="title_activity_navigation_drawer">NavigationDrawerActivity</string>
-    <string name="title_section1">Section 1</string>
-    <string name="title_section2">Section 2</string>
-    <string name="title_section3">Section 3</string>
-
-    <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
-
-    <string name="action_example">Example action</string>
-
-    <string name="action_settings">Settings</string>
-    <string name="cut">Cut</string>
-    <string name="copy">Copy</string>
-    <string name="paste">Paste</string>
-    <string name="new_thing">New Thing</string>
+    <string name="today_s_rates_are">Today\'s Rates Are:</string>
+    <string name="shil_CAPS">SHIL</string>
+    <string name="dolr_CAPS">DOLR</string>
+    <string name="quid_CAPS">QUID</string>
+    <string name="peny_CAPS">PENY</string>
+    <string name="back_to_map">Back to Map</string>
+    <string name="start">Start</string>
+    <string name="welcome_to_coinz">Welcome to Coinz!</string>
+    <string name="press_start_to_play">Press start to play</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="welcome_back_name">Welcome back, [name]!</string>
+    <string name="email_SBR">[email]</string>
+    <string name="gold">GOLD:</string>
+    <string name="coinz">Coinz</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="coin_desc">Pixelated gold coin</string>
 </resources>

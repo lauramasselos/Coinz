@@ -292,16 +292,17 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     }
 
     private fun transferTo(friendEmail: String) {
-        firestoreWallet?.get()?.addOnSuccessListener {
+        firestoreWallet?.get()?.addOnSuccessListener {firebaseWallet ->
             val coinSelected = spinner.selectedItem as Coin
                 coinSelected.collectedByUser = "false"
                 coinSelected.transferred = "true"
                 Log.d(tag, "Coin is $coinSelected")
             val id = coinSelected.id
+            coinSelected.id = coinSelected.id + '0'
 
-            for (Coin in it) {
+            for (Coin in firebaseWallet) {
                 if (coinSelected.id == Coin.id) {
-                    coinSelected.id = coinSelected.id + 0
+                    coinSelected.id = coinSelected.id + '0'
                 }
             }
 
