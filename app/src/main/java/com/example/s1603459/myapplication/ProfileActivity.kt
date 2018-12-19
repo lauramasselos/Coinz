@@ -19,21 +19,28 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import kotlinx.android.synthetic.main.activity_profile.*
 
+// This class is used to show the current user's profile, and how much gold they have at this point.
+
 class ProfileActivity : AppCompatActivity() {
 
     private val tag = "ProfileActivity"
+
+    // Firebase references
     private var mAuth: FirebaseAuth? = null
-    private var user: FirebaseUser? = null
-    private var firestore: FirebaseFirestore? = null
+    private var user: FirebaseUser? = null // Current user
+    private var firestore: FirebaseFirestore? = null // Firestore used to read from/write to database
     private var mDatabase: FirebaseDatabase? = null
-    private var firestoreUsers: CollectionReference? = null
-    private var firestoreBanked: CollectionReference? = null
+    private var firestoreUsers: CollectionReference? = null // Reference to list of all accounts on Coinz app
+    private var firestoreBanked: CollectionReference? = null // Reference to where in database bankec coins are to be stored
+
+    // UI elements
     private var userName: TextView? = null
     private var usersEmail: TextView? = null
     private var usersGold: TextView? = null
     private var tvBackToMap: TextView? = null
     private var tvLogout: TextView? = null
 
+    // Current user's email
     private lateinit var email: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,8 +49,9 @@ class ProfileActivity : AppCompatActivity() {
         initialise()
     }
 
+    // Initialises variables, UI elements, (TextView) buttons and Firebase references
     private fun initialise() {
-        if (!connected()) {
+        if (!connected()) { // If there's no internet connection, restart activity on click of Retry button
             Snackbar.make(coordinatorLayout_profile, "No internet connection!", Snackbar.LENGTH_INDEFINITE)
                     .setAction("Retry") {
                         finish()
@@ -72,12 +80,14 @@ class ProfileActivity : AppCompatActivity() {
         }
     }
 
+    // Signs user out and redirects them to the login screen
     private fun signOut() {
         mAuth!!.signOut()
         finish()
         startActivity(Intent(this, LoginActivity::class.java))
     }
 
+    // Retrieves user's name from Firebase to display in-app
     @SuppressLint("SetTextI18n")
     private fun getName() {
         firestoreUsers!!.document(email).get().addOnSuccessListener { userInfo ->
@@ -86,6 +96,7 @@ class ProfileActivity : AppCompatActivity() {
         }
     }
 
+    // Retrieves user's gold from Firebase to display in-app, and calls method to set user's level based on gold collected
     private fun getGold() {
         firestoreBanked!!.get().addOnSuccessListener { firebaseGold ->
             var goldTotal = 0.0
@@ -98,6 +109,7 @@ class ProfileActivity : AppCompatActivity() {
         }
     }
 
+    // BONUS FEATURE: Sets user's level to be GOLD / 50000 rounded down to the nearest integer. The level a user is on is how many metres greater than 25 their pick-up radius is when collecting coins
     private fun setLevel(gold: Double) {
         val level = gold.toInt() / 50000
         val newLevel = mapOf("level" to level, "gold" to gold)
@@ -106,6 +118,7 @@ class ProfileActivity : AppCompatActivity() {
         }
     }
 
+    // Method returning Boolean that checks if device is connected to the internet
     private fun connected(): Boolean {
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE)
         return if (connectivityManager is ConnectivityManager) {

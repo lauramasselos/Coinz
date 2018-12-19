@@ -20,20 +20,29 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import kotlinx.android.synthetic.main.activity_create_account.*
 
+// This class is used when creating a new user; information is stored both in Firebase authentication as well as in the Firebase Database
+
 class CreateAccountActivity : AppCompatActivity() {
 
+
     private val tag = "CreateAccountActivity"
+
+    // UI elements
     private var etFirstName: EditText? = null
     private var etLastName: EditText? = null
     private var etEmail: EditText? = null
     private var etPassword: EditText? = null
     private var btnCreateAccount: Button? = null
     private var mProgressBar: ProgressDialog? = null
-    private lateinit var mDatabaseReference: DatabaseReference
+
+   // Firebase references
     private var mDatabase: FirebaseDatabase? = null
     private var mAuth: FirebaseAuth? = null
-    private var firestore: FirebaseFirestore? = null
-    private var firestoreUsers: DocumentReference? = null
+    private var firestore: FirebaseFirestore? = null // Firestore used to read to/write from database
+    private var firestoreUsers: DocumentReference? = null // Reference to list of all accounts on Coinz app
+    private lateinit var mDatabaseReference: DatabaseReference
+
+    // New user's information
     private var firstName: String? = null
     private var lastName: String? = null
     private var email: String? = null
@@ -45,10 +54,10 @@ class CreateAccountActivity : AppCompatActivity() {
         firestore = FirebaseFirestore.getInstance()
         val settings = FirebaseFirestoreSettings.Builder().setTimestampsInSnapshotsEnabled(true).build()
         firestore?.firestoreSettings = settings
-
-        realtimeUpdateListener()
         initialise()
     }
+
+    // Initialises variables, UI elements, buttons, and Firebase references
     private fun initialise() {
         etFirstName = findViewById<View>(R.id.et_first_name) as EditText
         etLastName = findViewById<View>(R.id.et_last_name) as EditText
@@ -62,7 +71,9 @@ class CreateAccountActivity : AppCompatActivity() {
         btnCreateAccount!!.setOnClickListener { createNewAccount() }
     }
 
+    // Called on click of the 'Create Account' button, this registers a new user onto Firebase
     private fun createNewAccount() {
+        // Sets user information as what was input in-app
         firstName = etFirstName?.text.toString()
         lastName = etLastName?.text.toString()
         email = etEmail?.text.toString()
@@ -71,55 +82,42 @@ class CreateAccountActivity : AppCompatActivity() {
         if (!TextUtils.isEmpty(firstName) && !TextUtils.isEmpty(lastName) && !TextUtils.isEmpty(email) && !TextUtils.isEmpty(password)) {
             mProgressBar!!.setMessage("Registering User...")
             mProgressBar!!.show()
-            mAuth!!.createUserWithEmailAndPassword(email!!, password!!).addOnCompleteListener(this) { task ->
+            mAuth!!.createUserWithEmailAndPassword(email!!, password!!).addOnCompleteListener(this) { task -> // Creates user with Firebase authentication
                 mProgressBar!!.hide()
-                if (task.isSuccessful) {
-                    Log.d(tag, "createUserWithEmail:success")
+                if (task.isSuccessful) { // Checks if user with email given already exists
+                    Log.d(tag, "[createNewAccount] success!")
                     val user = mAuth!!.currentUser
                     val usersEmail = user!!.email
                     firestoreUsers = firestore?.collection("Users")?.document(usersEmail!!)
-                    verifyEmail()
+                    verifyEmail() // Sends verification email to new user
                     updateUserInfoAndUI()
-
                     val name = "$firstName $lastName"
-                    writeNewUser(user.uid, name, user.email!!)
+                    writeNewUser(user.uid, name, user.email!!) // Writes new user to Firebase
                 } else {
-                    Log.w(tag, "createUserWithEmail:failure", task.exception)
+                    Log.w(tag, "[createNewAccount] failed.", task.exception)
                     Snackbar.make(coordinatorLayout_register, "Account already exists!", Snackbar.LENGTH_SHORT).show()
                 }
             }
 
-        } else {
+        } else { // One or more fields left empty; must be filled out
             Snackbar.make(coordinatorLayout_register, "Enter all details", Snackbar.LENGTH_SHORT).show()
         }
 
     }
 
+    // Given all the information entered, this writes the new user to the Firebase database.
     private fun writeNewUser(userId: String, name: String, email: String) {
-        val user = User(userId, name, email, 0)
+        val user = User(userId, name, email, 0) // New user starts at level 0 as default
         mDatabaseReference.child("users").child(userId).setValue(user)
         mDatabaseReference.child("users").child(userId).child("name").setValue(name)
-
-        val newUser = User(userId, name, email, 0)
-        firestoreUsers?.set(newUser)?.addOnSuccessListener{
-            Log.d(tag, "User added to database")}
-                ?.addOnFailureListener{
-                    Log.d(tag, "Failed to add user")
-                }
-    }
-
-
-    private fun realtimeUpdateListener() {
-        firestoreUsers?.addSnapshotListener { documentSnapshot, e ->
-            when {
-                e != null -> Log.d(tag, "e != null")
-                documentSnapshot != null && documentSnapshot.exists() -> {
-                }
-            }
+        firestoreUsers?.set(user)?.addOnSuccessListener{
+            Log.d(tag, "User added to database")
+        }?.addOnFailureListener{
+            Log.d(tag, "Failed to add user")
         }
     }
 
-
+    // Sends verification email to new user
     private fun verifyEmail() {
         val mUser = mAuth!!.currentUser
         mUser!!.sendEmailVerification().addOnCompleteListener(this) { task ->
@@ -132,11 +130,10 @@ class CreateAccountActivity : AppCompatActivity() {
         }
     }
 
+    // Upon creating an account, user is redirected to the login screen
     private fun updateUserInfoAndUI() {
-        val intent = Intent(this@CreateAccountActivity, LoginActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         finish()
-        startActivity(intent)
+        startActivity(Intent(this, LoginActivity::class.java))
     }
 
 }
