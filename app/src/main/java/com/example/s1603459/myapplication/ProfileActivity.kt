@@ -76,7 +76,9 @@ class ProfileActivity : AppCompatActivity() {
             getName()
             getGold()
             tvBackToMap = findViewById<View>(R.id.tv_back_to_map) as TextView
-            tvBackToMap!!.setOnClickListener { startActivity(Intent(this, MainActivity::class.java)) }
+            tvBackToMap!!.setOnClickListener {
+                finish()
+                startActivity(Intent(this, MainActivity::class.java)) }
         }
     }
 
