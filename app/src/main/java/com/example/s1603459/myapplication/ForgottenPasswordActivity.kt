@@ -12,7 +12,7 @@ import android.widget.EditText
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_forgotten_password.*
 
-// This class is used when an existing user has forgotten their password, and sends them an email where they can set a new password
+// This class is used when an existing user has forgotten their password, and sends them an email where they can set a new password.
 
 class ForgottenPasswordActivity : AppCompatActivity() {
 

@@ -20,7 +20,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import kotlinx.android.synthetic.main.activity_create_account.*
 
-// This class is used when creating a new user; information is stored both in Firebase authentication as well as in the Firebase Database.
+// This class is used when creating a new user; information is stored both in Firebase authentication as well as in the Firebase Database
 
 class CreateAccountActivity : AppCompatActivity() {
 

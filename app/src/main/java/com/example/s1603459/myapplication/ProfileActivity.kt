@@ -19,7 +19,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import kotlinx.android.synthetic.main.activity_profile.*
 
-// This class is used to show the current user's profile, and how much gold they have at this point
+// This class is used to show the current user's profile, and how much gold they have at this point.
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -83,8 +83,10 @@ class ProfileActivity : AppCompatActivity() {
     // Signs user out and redirects them to the login screen
     private fun signOut() {
         mAuth!!.signOut()
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         finish()
-        startActivity(Intent(this, LoginActivity::class.java))
+        startActivity(intent)
     }
 
     // Retrieves user's name from Firebase to display in-app

@@ -44,7 +44,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
-// This class is used as the main UI for the game: it's where users can track their location and collect coins on a different map every day.
+// This class is used as the main UI for the game: it's where users can track their location and collect coins on a different map every day
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListener, LocationEngineListener, DownloadCompleteListener  {
 
@@ -183,8 +183,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             isEmailVerified = user?.isEmailVerified
             btnBank = findViewById<View>(R.id.bankBtn) as FloatingActionButton
             btnProfile = findViewById<View>(R.id.profileBtn) as FloatingActionButton
-            btnBank!!.setOnClickListener { startActivity(Intent(this, BankActivity::class.java)) }
-            btnProfile!!.setOnClickListener { startActivity(Intent(this, ProfileActivity::class.java)) }
+            btnBank!!.setOnClickListener {
+                finish()
+                startActivity(Intent(this, BankActivity::class.java)) }
+            btnProfile!!.setOnClickListener {
+                finish()
+                startActivity(Intent(this, ProfileActivity::class.java)) }
             firestore = FirebaseFirestore.getInstance()
             val settings = FirebaseFirestoreSettings.Builder().setTimestampsInSnapshotsEnabled(true).build()
             firestore?.firestoreSettings = settings
@@ -360,15 +364,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             // Location of each coin
             val coordinates = (Feature.geometry() as Point).coordinates()
             val jsonObject = Feature.properties()
+
             // Currency of each coin
             val currency = (jsonObject?.get(CURRENCY_FIELD).toString()).replace("\"", "")
+
             // Value of each coin
             val value = (jsonObject?.get(VALUE_FIELD).toString()).replace("\"", "")
+
             // ID of coin
             val id = jsonObject?.get(ID_FIELD).toString()
+
             // Icon used to represent each coin on map
             val icon = IconFactory.getInstance(this)
             val coin = icon.fromResource(R.drawable.pixelcoin)
+
             if (!coinsCollected.contains(id)) { // If a coin with this ID hasn't been collected, drop a marker on the map
                 val marker = map.addMarker(MarkerOptions().position(LatLng(coordinates[1], coordinates[0])).title(currency).snippet(value).icon(coin))
                 markers[id] = marker // Store this marker with the coin's ID into a HashMap for later use

@@ -14,7 +14,8 @@
         android:fontFamily="@font/orbitron"
         android:hint="@string/first_name"
         android:inputType="textPersonName"
-        android:textColor="@android:color/white" />
+        android:textColor="@android:color/white"
+        tools:ignore="Autofill" />
 
     <EditText
         android:id="@+id/et_last_name"
@@ -24,7 +25,8 @@
         android:fontFamily="@font/orbitron"
         android:hint="@string/last_name"
         android:inputType="textPersonName"
-        android:textColor="@android:color/white" />
+        android:textColor="@android:color/white"
+        tools:ignore="Autofill" />
 
     <EditText
         android:id="@+id/et_email"
@@ -34,7 +36,8 @@
         android:fontFamily="@font/orbitron"
         android:hint="@string/email"
         android:inputType="textEmailAddress"
-        android:textColor="@android:color/white" />
+        android:textColor="@android:color/white"
+        tools:ignore="Autofill" />
 
     <EditText
         android:id="@+id/et_password"
@@ -44,7 +47,8 @@
         android:fontFamily="@font/orbitron"
         android:hint="@string/password"
         android:inputType="textPassword"
-        android:textColor="@android:color/white" />
+        android:textColor="@android:color/white"
+        tools:ignore="Autofill" />
 
     <Button
         android:id="@+id/btn_register"

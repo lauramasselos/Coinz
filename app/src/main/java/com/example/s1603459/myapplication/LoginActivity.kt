@@ -16,7 +16,7 @@ import android.widget.EditText
 import android.widget.TextView
 import kotlinx.android.synthetic.main.activity_login.*
 
-// This class is used to login a user to the Coinz app.
+// This class is used to login a user to the Coinz app
 
 class LoginActivity : AppCompatActivity() {
 
@@ -57,9 +57,13 @@ class LoginActivity : AppCompatActivity() {
         mAuth = FirebaseAuth.getInstance()
 
         // On click, user is redirected to ForgottenPasswordActivity
-        tvForgotPassword!!.setOnClickListener { startActivity(Intent(this, ForgottenPasswordActivity::class.java)) }
+        tvForgotPassword!!.setOnClickListener {
+            finish()
+            startActivity(Intent(this, ForgottenPasswordActivity::class.java)) }
         // On click, user is redirected to CreateAccountActivity
-        btnCreateAccount!!.setOnClickListener { startActivity(Intent(this, CreateAccountActivity::class.java)) }
+        btnCreateAccount!!.setOnClickListener {
+            finish()
+            startActivity(Intent(this, CreateAccountActivity::class.java)) }
         // On click, user is attempting to login, calling loginUser()
         btnLogin!!.setOnClickListener { loginUser() }
     }
@@ -91,8 +95,10 @@ class LoginActivity : AppCompatActivity() {
 
     // Upon logging in, user is redirected to game (specifically the MainActivity map)
     private fun updateUI() {
+        val intent = Intent(this, MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         finish()
-        startActivity(Intent(this, MainActivity::class.java))
+        startActivity(intent)
     }
 
 

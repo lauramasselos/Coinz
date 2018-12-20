@@ -340,7 +340,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             // Modify current user's wallet
             firestoreWallet?.document(coinSelected.id)?.set(coinSelected)?.addOnSuccessListener {
                 Log.d(tag, "[transferTo] Coin removed from user's display wallet")
-                Snackbar.make(coordinatorLayout_bank, "Coin sent to $friendEmail!", Snackbar.LENGTH_SHORT).show()
+                Toast.makeText(this, "Coin sent to $friendEmail!", Toast.LENGTH_LONG).show()
                 finish()
                 startActivity(Intent(this, BankActivity::class.java))
             }?.addOnFailureListener{
@@ -364,7 +364,7 @@ class BankActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
             // Add coin to bank, its value in gold, in Firebase
             firestoreBanked?.document(coin.id)?.set(bankedCoin)?.addOnSuccessListener {
-                Snackbar.make(coordinatorLayout_bank, "Coin banked!", Snackbar.LENGTH_SHORT).show()
+                Toast.makeText(this, "Coin banked!", Toast.LENGTH_LONG).show()
             }?.addOnFailureListener{
                 Log.d(tag, "Failed to bank coin")
             }
