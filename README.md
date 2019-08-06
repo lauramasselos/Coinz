@@ -1,10 +1,10 @@
-Informatics Large Practical
+### Informatics Large Practical
 
 
 The app  is  a  prototype  of  a  multi-player  collaborative  location-based  game  where
 players collect and exchange virtual coins which have been scattered at random around
-the  University  of  Edinburgh’s  Central  Area.   Your  app  should  be  considered  to  be  a
-prototype in the sense that you should think that it is being created with the intention
+the  University  of  Edinburgh’s  Central  Area.   The  app  should  be  considered  to  be  a
+prototype in the sense that it is being created with the intention
 of passing it on to a team of developers who will maintain and develop it further. 
 
 In the Coinz game, the locations of the coins are specified on a map.  Coins are collected
